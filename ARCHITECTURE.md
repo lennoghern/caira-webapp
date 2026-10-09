@@ -435,7 +435,7 @@ How this was checked: every foundation renders under `renderToString` in a Node 
 4. Overlays and Activity: **not done**; no overlay exists yet.
 5. Tailwind does scan `packages/ui` without help. The package still declares `@source` so it also works when the consumer's base directory is elsewhere (the harness, Storybook).
 6. HIG color and typography values: transcribed and guarded by `tokens.test.ts`.
-7. Glass recipe: set by the contrast tests; **not yet reviewed by eye**. D-025.
+7. Glass recipe: reviewed by eye by the owner, who chose recipe 2 ("less veil, more saturation") as the default on 2026-10-09. The asymmetric edge stays a trial story and is not the default. The values are still INFERRED and still held by the contrast tests; fine-tuning waits for real components and will touch tokens only (D-034, D-038; the method is D-025). The window corner radius, the other half of that item, has not been reviewed: no window exists yet. (Corrected on 2026-10-09; this line said the recipe had not been reviewed by eye.)
 8. Reading: Color, Typography, Materials and Motion read in full. Still unread: focus-and-selection, keyboards, pointing-devices, modality, WWDC25 219 and 356, WWDC26 250 and 292.
 
 ### 13.6 Limits of the Phase 1 evidence

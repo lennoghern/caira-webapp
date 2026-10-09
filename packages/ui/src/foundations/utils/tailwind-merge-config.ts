@@ -23,7 +23,7 @@ export const TEXT_STYLES = [
   "caption2",
 ] as const;
 
-export const RADII = ["control", "field", "menu", "popover", "panel", "sheet", "window"] as const;
+export const RADII = ["control", "field", "box", "menu", "popover", "panel", "sheet", "window"] as const;
 
 export const EASINGS = ["standard", "enter", "exit", "bounce"] as const;
 

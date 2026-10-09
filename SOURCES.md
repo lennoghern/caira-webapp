@@ -200,3 +200,21 @@ Additions to section 8 (not verified):
 - **WebKit behavior**: nothing in Phase 1 ran in WebKit.
 - **Why Playwright's Firefox screenshots omit `backdrop-filter`**: observed, cause not looked up.
 - **The WAI-ARIA 1.2 specification** (W3) is still unread.
+
+## 12. Phase 2 additions (accessed 2026-10-09)
+
+Rows added while building components, one batch at a time. Apple pages were read once each, by hand-driven requests (D-022).
+
+### Batch 1: Layout and organization
+
+| ID | Source | URL | Used for | Label |
+| --- | --- | --- | --- | --- |
+| A41 | HIG Boxes, read in full | https://developer.apple.com/design/human-interface-guidelines/boxes | A box groups related information and components with a visible border or background color and an optional title; keep it small next to its container; prefer padding and alignment to nested boxes; title in sentence-style capitalization with no ending punctuation, except a colon in a settings pane; iOS and iPadOS use the secondary and tertiary background colors; macOS displays the title above the box; not supported in tvOS or watchOS. The page gives no number and, in the text retrieved, no change log | VERIFIED |
+| A42 | SwiftUI `GroupBox` reference | https://developer.apple.com/documentation/swiftui/groupbox | Names cited in the `Box` JSDoc: `init(content:)`, `init(content:label:)`, `init(_:content:)`, `groupBoxStyle(_:)`. `init(label:content:)` is marked deprecated. The page does not say where the label is drawn | VERIFIED |
+| A43 | AppKit `NSBox` reference | https://developer.apple.com/documentation/appkit/nsbox | Names cited: `title`, `titlePosition`, `contentView`, `contentViewMargins`, `boxType`, `isTransparent`, and the custom-box properties `borderColor`, `borderWidth`, `cornerRadius`, `fillColor`. The cases of `NSBox.TitlePosition` and `NSBox.BoxType` are not on the page and are not cited | VERIFIED |
+| W10 | ARIA in HTML (W3C Recommendation, 11 August 2026) | https://www.w3.org/TR/html-aria/ | `fieldset` has the implicit semantics `role=group`; `section` is a `region` only when it has an accessible name. Read through a summarizing fetch, first 100,000 characters of the page. D-039 | STANDARD |
+| L15 | Installed files: React 19.3.0 and react-aria-components 1.22.0 | `node_modules/react/cjs/react.react-server.production.js`; `packages/ui/node_modules/react-aria-components/dist/private/Group.js`, `dist/types/src/Group.d.ts` | React's server build exports five hooks: `use`, `useCallback`, `useDebugValue`, `useId`, `useMemo`. React Aria's `Group` renders a `div` with `role="group"` and data attributes for hover, focus within, disabled, invalid and read-only; it provides nothing to its children. D-039 | LOCAL |
+| L16 | Measurement in jsdom 30.1.2 on this machine | a scratch Vitest file, not kept | Inside `<fieldset disabled>`, a React Aria `Button` matches `:disabled`, has no `disabled` attribute and no `data-disabled`, and a click calls `onPress` zero times. D-039 | LOCAL |
+| L17 | Next.js 16.4.0 bundled docs, "The Server and Client Boundary" | `node_modules/next/dist/docs/01-app/02-guides/server-and-client-boundary.md` | A static member of a compound Client Component is `undefined` when read from a Server Component, so parts are named exports, never `Menu.Item`; function props cannot cross the boundary | LOCAL |
+
+Not verified in this batch so far: where SwiftUI draws a `GroupBox` label on iOS (the title inside the box at iOS density is INFERRED), and anything in WebKit.

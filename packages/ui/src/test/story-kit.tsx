@@ -9,7 +9,7 @@ import { cn } from "../foundations/utils/cn";
  * Apple asset is used anywhere in the playground (DECISIONS D-016).
  */
 
-export type BackdropKind = "media" | "content" | "white" | "black";
+export type BackdropKind = "media" | "content" | "plain" | "white" | "black";
 
 const MEDIA: CSSProperties = {
   backgroundColor: "#1d2671",
@@ -80,7 +80,11 @@ export interface BackdropProps extends ComponentProps<"div"> {
   kind?: BackdropKind | "stripes" | "photo";
 }
 
-/** Something for glass and materials to sit on. */
+/**
+ * Something for a component to sit on. Glass and materials go over `media`,
+ * `photo` or `stripes`; content-layer components go on `plain`, the app
+ * background of the current appearance.
+ */
 export function Backdrop({ kind = "media", className, style, children, ...props }: BackdropProps) {
   const fill =
     kind === "media"
@@ -98,7 +102,11 @@ export function Backdrop({ kind = "media", className, style, children, ...props 
     <div
       {...props}
       data-backdrop={kind}
-      className={cn("relative isolate overflow-hidden", kind === "content" && "bg-background", className)}
+      className={cn(
+        "relative isolate overflow-hidden",
+        (kind === "content" || kind === "plain") && "bg-background",
+        className,
+      )}
       style={{ ...fill, ...style }}
     >
       {kind === "content" ? (

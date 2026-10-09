@@ -65,6 +65,7 @@ const TEXT_CLASSES: Record<(typeof TEXT_STYLES)[number], string> = {
 const RADIUS_CLASSES: Record<(typeof RADII)[number], string> = {
   control: "rounded-control",
   field: "rounded-field",
+  box: "rounded-box",
   menu: "rounded-menu",
   popover: "rounded-popover",
   panel: "rounded-panel",

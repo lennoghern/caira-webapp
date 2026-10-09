@@ -46,7 +46,7 @@ These belong to `GlassSurface` and `LiquidGlassProvider`, not to one component. 
 
 | # | Component | Tier | Apple APIs | Web element and ARIA pattern | Primitive used | macOS 27 changes | Open questions |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 5 | [Boxes](https://developer.apple.com/design/human-interface-guidelines/boxes) | A | SwiftUI `GroupBox` · AppKit `NSBox`. Not supported in tvOS or watchOS | `<fieldset>` + `<legend>` for form groups, otherwise `role="group"` with a label. [Landmarks][apg-landmarks] only when it is a page region | `Group` (+ `Label`, `Heading`) | None found | None |
+| 5 | [Boxes](https://developer.apple.com/design/human-interface-guidelines/boxes) | A | SwiftUI `GroupBox` · AppKit `NSBox`. Not supported in tvOS or watchOS | `role="group"` named by its title. `role="region"` ([Landmarks][apg-landmarks]) only when it is a page region. No `<fieldset>` form (D-039) | **Custom**, native `<div role="group">`. No React Aria primitive: a box has no behavior for one to manage. The plan was `Group` (+ `Label`, `Heading`); changed in D-039, proposed and awaiting review | None found (page read again in full on 2026-10-09, SOURCES A41) | On glass or on a material the box stays opaque; a translucent fill there needs the contrast model extended first |
 | 6 | [Collections](https://developer.apple.com/design/human-interface-guidelines/collections) | A | UIKit `UICollectionView` · AppKit `NSCollectionView`. Not supported in watchOS | [Grid][apg-grid] for selectable items; plain list when not interactive | `GridList` + `Virtualizer` with `GridLayout` or `WaterfallLayout`; `useDragAndDrop` for reordering | UPD: SwiftUI `reorderable()` in more containers (API only) | Virtualization threshold. Keyboard reordering alternative for WCAG 2.5.7 |
 | 7 | [Column views](https://developer.apple.com/design/human-interface-guidelines/column-views) | A | AppKit `NSBrowser`. macOS only | Miller columns. Closest patterns: [Tree View][apg-treeview] (one tree shown as columns) or one [Listbox][apg-listbox] per column | **Custom, built from APG pattern**, composing one `ListBox` per column | None found | Tree semantics versus a row of listboxes. Decide with a screen-reader spike before the Layout batch |
 | 8 | [Disclosure controls](https://developer.apple.com/design/human-interface-guidelines/disclosure-controls) | A | SwiftUI `DisclosureGroup` · AppKit `NSButton.BezelStyle.disclosure`, `.pushDisclosure`. Not supported in tvOS or watchOS | [Disclosure][apg-disclosure]; [Accordion][apg-accordion] for groups | `Disclosure`, `DisclosurePanel`, `DisclosureGroup` | None found | None |
@@ -139,17 +139,17 @@ These belong to `GlassSurface` and `LiquidGlassProvider`, not to one component. 
 
 ## Totals by main primitive
 
-Counted from the "Primitive used" column above. ARCHITECTURE.md section 2 states the same figures.
+Counted from the "Primitive used" column above. Changed on 2026-10-09: Boxes (5) moved from React Aria to custom (D-039, proposed). ARCHITECTURE.md sections 2 and 4 still state the Phase 0 figures, 43 and 20.
 
 | Main primitive | Rows | Which |
 | --- | --- | --- |
-| React Aria Components | 43 | Every row not listed in the next two lines |
-| Custom | 20 | 1, 2, 4, 7, 11, 13, 34, 35, 37, 39, 42, 50, 54, 56, 58, 60, 61, 62, 63, 64 |
+| React Aria Components | 42 | Every row not listed in the next two lines |
+| Custom | 21 | 1, 2, 4, 5, 7, 11, 13, 34, 35, 37, 39, 42, 50, 54, 56, 58, 60, 61, 62, 63, 64 |
 | Base UI (exception candidate) | 1 | 25 The menu bar |
 | **Total** | **64** | |
 
-- Floating UI is a positioning helper, not a main primitive. It appears in one row, Edit menus (19), which is counted among the 43.
-- "Custom" means no single primitive backs the component. 11 of the 20 custom rows still compose React Aria parts (7, 11, 35, 42, 50, 54, 56, 58, 60, 61, 64); 9 use none (1, 2, 4, 13, 34, 37, 39, 62, 63).
+- Floating UI is a positioning helper, not a main primitive. It appears in one row, Edit menus (19), which is counted among the 42.
+- "Custom" means no single primitive backs the component. 11 of the 21 custom rows still compose React Aria parts (7, 11, 35, 42, 50, 54, 56, 58, 60, 61, 64); 10 use none (1, 2, 4, 5, 13, 34, 37, 39, 62, 63).
 - Base UI is also named as a fallback only, in Digit entry views (42, counted as custom) and Notifications (59, counted as React Aria).
 
 ## Exceptions register
@@ -169,7 +169,7 @@ Radix: not used. No justification needed.
 
 Marked "custom" above, built from the cited pattern or from native elements:
 
-Charts (1), Image views (2), Web views (4), Column views (7), Lockups (11), Split views (13), Page controls (34), Panels (35), Scroll views (37), Windows (39), Digit entry views (42), Virtual keyboards (50), Rating indicators (54), Complications (56), Live Activities (58), Snippets (60), Status bars (61), Top Shelf (62), Watch faces (63), Widgets (64), plus the toolbar overflow logic (26) and the Activity rings drawing (51).
+Charts (1), Image views (2), Web views (4), Boxes (5), Column views (7), Lockups (11), Split views (13), Page controls (34), Panels (35), Scroll views (37), Windows (39), Digit entry views (42), Virtual keyboards (50), Rating indicators (54), Complications (56), Live Activities (58), Snippets (60), Status bars (61), Top Shelf (62), Watch faces (63), Widgets (64), plus the toolbar overflow logic (26) and the Activity rings drawing (51).
 
 ## Reclassification
 

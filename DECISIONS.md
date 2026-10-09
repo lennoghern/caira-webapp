@@ -2,7 +2,7 @@
 
 Architectural decisions and their reasons, so a new session can continue without deciding again. Add a new entry for every decision; never rewrite an old one, supersede it.
 
-Evidence labels and source IDs are defined in SOURCES.md. **Last updated: 2026-10-09 (Phase 1, after review round 3). Entries D-001 to D-022 are from Phase 0 and are left as written; D-023 onward record what was decided since and say which earlier entry they amend. D-027 is superseded by D-032 (confirmed in D-037). D-033 is resolved by D-034.**
+Evidence labels and source IDs are defined in SOURCES.md. **Last updated: 2026-10-09 (Phase 1 closed; Phase 2 started with Boxes). Entries D-001 to D-022 are from Phase 0 and are left as written; D-023 onward record what was decided since and say which earlier entry they amend. D-027 is superseded by D-032 (confirmed in D-037). D-033 is resolved by D-034, and the question D-034 left open is resolved by D-038.**
 
 ## Status values
 
@@ -16,10 +16,12 @@ Answered on 2026-10-08 and recorded in D-023: D-001, D-009, D-010, D-012, D-013,
 
 Answered on 2026-10-09: D-033 (which recipe is the default: recipe 2, recorded in D-034), and the margin that choice left at the clear end (accepted, D-035). The two-surface morph of D-032 was marked pending by you (D-037); it stays in the table because nothing is built.
 
+Answered on 2026-10-09, closing Phase 1 (D-038): the asymmetric edge stays a trial and is not the default, which was the question D-034 left open.
+
 | ID | Question | Blocks |
 | --- | --- | --- |
+| D-039 | Boxes was built as the template for the other components: native markup with no React Aria and no `"use client"`, a `title` prop instead of compound parts, no `<fieldset>` form, and a fixed set of files per component. Approve it, or change which part? | The other nine Layout components |
 | D-024 | Storybook cannot start on this machine (Smart App Control blocks a native module). Allow the WebAssembly build, change the setting yourself, keep the stand-in, or switch to Ladle? | The playground application. Visual review can use `pnpm stories` meanwhile |
-| D-034 | Does the asymmetric edge (recipe 5) go onto the default glass? It has a trial story, "Foundations/Glass recipes: Asymmetric edge on the default". Its edge band is not in the contrast model yet | Nothing; the default ships without it |
 | D-032, D-037 | Morphing between two different surfaces that share an identity is not built, and is pending by your instruction of 2026-10-09. Build it as a FLIP on real elements, or leave it until a component needs it? | Batches that would morph one surface into another (Live Activities, Action sheets) |
 | D-031 | Raise the root `@types/node` from 20 to 24 to match the Node 24 runtime and Vitest 5's peer range? | Nothing; it removes a warning |
 | D-003 | The menu bar: Base UI exception or custom build? | Menus batch (after a spike) |
@@ -417,3 +419,53 @@ The owner looked at the comparison of D-033 and chose a recipe by eye, asked for
   3. Browser support for the mechanism (STANDARD, MDN browser-compat-data): animating grid tracks needs Chrome 107, Firefox 66 or Safari 16, all inside the baseline of D-008. No View Transitions API is needed.
 - **Verified again on 2026-10-09**, with recipe 2 as the default: `expand.spec.ts`, 5 of 5 in Chromium and in Firefox. The file's time limit is now 90 seconds, because one Firefox test took 40 seconds in a full run with other workers recording video and 16 seconds alone; the assertions are the same.
 - **Not verified**: WebKit.
+
+---
+
+# Phase 1 closed, Phase 2 started (2026-10-09)
+
+The owner closed Phase 1 and asked for the Layout category, one component first (Boxes) as the template for the rest, then a stop for review.
+
+## D-038 Phase 1 is closed: recipe 2 is the default, the asymmetric edge stays a trial, the look is tuned later through tokens
+
+- **Status**: Decided by the owner on 2026-10-09.
+- **Confirms**: D-034 item 1. **Resolves**: the question D-034 left open, whether the asymmetric edge goes onto the default glass.
+- **Decision**:
+  1. Recipe 2, "less veil, more saturation", chosen by the owner by eye, is the default for regular glass. No value changes with this entry: it is what `glass.css` has shipped since review round 2 (the table in D-034).
+  2. The asymmetric edge of recipe 5 stays a trial and is not the default. Its story, "Foundations/Glass recipes: Asymmetric edge on the default", is kept, and the knobs it uses (`--glass-edge`, `--glass-sheen-image`, `--glass-refraction-filter`) stay unset by default.
+  3. Fine-tuning of the look waits until real components exist, and will be done by changing tokens only.
+- **What item 3 asks of Phase 2** (INFERRED: my reading of the instruction, not the owner's words): a component takes its look from the tokens and from the glass and material utilities and carries no glass numbers of its own, so that a later change to the tokens re-tunes every component at once. No recipe value changes during Phase 2 without the owner choosing it by eye, and the rules of rounds 2 and 3 still hold: no contrast threshold is lowered.
+- **If the edge is ever adopted**: its glow and shadow reach about 10 px in from the top and bottom, and that band is not in the contrast model, so it has to be modelled first (D-034).
+- **Documents**: ARCHITECTURE.md 13.5 item 7 is corrected. Left as it was, outside the instruction: the last line of ARCHITECTURE.md 13.6, "The visual design has not been reviewed by a person", which is no longer true of the glass recipe.
+
+## D-039 Boxes: native markup with no React Aria, and the shape of a component folder
+
+- **Status**: Proposed. Built this way on 2026-10-09; the owner reviews it as the template before the other nine Layout components.
+- **Amends**: COMPONENT-MAP.md row 5, whose primitive was React Aria's `Group`, and with it the totals there (42 rows backed by React Aria instead of 43, 21 custom instead of 20). ARCHITECTURE.md sections 2 and 4 still state the Phase 0 figures.
+- **Decision**:
+  1. `Box` is a `<div role="group">` named by its title through `aria-labelledby`. It imports nothing from `react-aria-components` and has no `"use client"`. The title id comes from `useId`.
+  2. It is one export with a `title` prop, not compound parts. The parts inside are reached with `classNames`.
+  3. There is no `<fieldset>` form.
+  4. Its look is tokens only: `--background-secondary`, `--background-tertiary` when nested, `--separator`, the label colors, and one new radius token, `--radius-box` (0.75rem, INFERRED).
+  5. A component is the set of files listed under "The template" below.
+- **Why 1**: a box has no behavior. `Group` would add hover and focus-within state and disabled, invalid and read-only flags for styling; HIG Boxes describes none of them (A41), and `Group` does not pass its disabled state to what is inside it (L15). In exchange every box would be a Client Component. D-002 keeps pure markup server-safe and the brief asks for minimal client boundaries. `useId` is one of the five hooks the installed React exports in its server build (L15).
+- **Why 2**: the frame is drawn around the content at macOS density and around the title and the content at iOS density, so the component has to own the element around `children`; with compound parts a caller could leave the frame out. It is also the shape of Apple's own API: `GroupBox(_:content:)` and `init(content:label:)` in SwiftUI, `title` and `contentView` on `NSBox` (A42, A43).
+- **Why 3**: measured in jsdom (L16): inside `<fieldset disabled>` a React Aria `Button` matches `:disabled` and takes no press, but has no `data-disabled`, so the library's disabled styling would not show. Nothing is lost for assistive technology: `fieldset` maps to the `group` role (STANDARD, W10), which is what the box sets.
+- **Why 4**: D-038 item 3, and the contrast of all three label levels on those two backgrounds is already asserted in `contrast.test.ts` for the four color states. The HIG names the two background colors for iOS and iPadOS only; using them at macOS density, the hairline border, the padding, the title style and placing the title inside the box at iOS density are INFERRED.
+- **To go back to `Group`**: `Box.tsx` only. It gains `"use client"`, `className` becomes React Aria's string-or-function, and row 5 and the totals in COMPONENT-MAP.md return to what they were.
+- **The template** (what the other components would copy):
+
+  | File | What goes in it |
+  | --- | --- |
+  | `src/<category>/<component>/Box.tsx` | The component and its props type. JSDoc in this order: what it is; server-safe or Client Component, and why; HIG URL; Apple API; ARIA role or APG pattern with its URL, and the keyboard map; what differs by platform; deviations from Apple's behavior; one example |
+  | `…/box.styles.ts` | `tv()` with one slot per element. A comment says which choices are VERIFIED and which are INFERRED |
+  | `…/Box.test.tsx` | jsdom: naming and roles, structure, controlled and uncontrolled modes where there is state, keyboard, `jest-axe`. Its header says what it cannot see |
+  | `…/Box.stories.tsx` | Title `"<Category>/<Export>"`. `Playground` with controls, one story per aspect, and `Theme matrix` (the 18 cells of `ThemeMatrix`) |
+  | `…/index.ts` | The public exports of the folder |
+  | `src/<category>/index.ts` | Re-exports each folder. No directive. Its comment lists which exports are server-safe and which are Client Components |
+  | `src/<category>/server.test.tsx` | Renders the server-safe exports of the category with no DOM |
+  | `tests/browser/<category>/<component>.spec.ts` | Chromium and Firefox, only what jsdom cannot see: layout, painted colors, right to left, forced colors |
+
+  Nothing has to be registered for the theme sweep: `stories-axe.spec.ts` picks up every story file and runs axe on it in 13 theme states per engine.
+- **Verified**: the figures are in PROGRESS.md, "Batch 1".
+- **Not verified**: WebKit; any screen reader; a box on glass or on a material (it stays opaque there, and a translucent fill would need the contrast model extended first).

@@ -15,7 +15,7 @@ const preview: Preview = {
     layout: "fullscreen",
     controls: { expanded: true },
     options: {
-      storySort: { order: ["Foundations", ["Tokens", "Materials", "GlassSurface", "Glass recipes", "GlassGroup", "Icon", "Theme"], "Tests"] },
+      storySort: { order: ["Foundations", ["Tokens", "Materials", "GlassSurface", "Glass recipes", "GlassGroup", "Icon", "Theme"], "Layout", "Tests"] },
     },
   },
   globalTypes: {

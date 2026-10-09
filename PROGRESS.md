@@ -2,7 +2,7 @@
 
 Single source of truth for what is built. Read this first in every session, then DECISIONS.md, COMPONENT-MAP.md and ARCHITECTURE.md.
 
-**Last updated: 2026-10-09, after the third review round. Current phase: Phase 1 (foundations), waiting for review. No component from the 64 has been started. Recipe 2 is the default glass. The narrowest contrast margin in the library is known and accepted by the owner (see "Review round 3" below). Blocked: the Storybook application cannot start on this machine (see "Blocked" below). Pending: morph between different surfaces. The decisions of 2026-10-09 are in DECISIONS.md as D-034 to D-037.**
+**Last updated: 2026-10-09, after the first component of Phase 2. Phase 1 (foundations) is closed by the owner (D-038): recipe 2 is the default glass, the asymmetric edge stays a trial, and the look is fine-tuned later through tokens. Current phase: Phase 2, batch 1 (Layout). One component of the 64 is built, Boxes, as the template for the rest (D-039); work is stopped for the owner's review of that template, and the other nine Layout components are not started. Known problem: a Phase 1 browser test, `expand.spec.ts`, fails now and then in Firefox, on the base commit too (see "Batch 1"). The narrowest contrast margin in the library is known and accepted by the owner (see "Review round 3" below). Blocked: the Storybook application cannot start on this machine (see "Blocked" below). Pending: morph between different surfaces. The decisions of 2026-10-09 are in DECISIONS.md as D-034 to D-039.**
 
 ## How to fill this in
 
@@ -19,8 +19,8 @@ Single source of truth for what is built. Read this first in every session, then
 | Phase | Scope | Status | Date |
 | --- | --- | --- | --- |
 | 0 | Research and plan: SOURCES.md, COMPONENT-MAP.md, ARCHITECTURE.md, PROGRESS.md, DECISIONS.md | done, approved | 2026-10-08 |
-| 1 | Foundations | built, awaiting review; playground application blocked | 2026-10-08 |
-| 2 | Components, one HIG category per session | not started | — |
+| 1 | Foundations | done, closed by the owner (D-038); playground application still blocked (D-024) | 2026-10-09 |
+| 2 | Components, one HIG category per session | in progress: batch 1, Layout, 1 of 10 built (Boxes), stopped for the owner's review of the template (D-039) | 2026-10-09 |
 | 3 | Docs, audit against SOURCES.md, known gaps | not started | — |
 
 ## Phase 1: foundations
@@ -29,7 +29,7 @@ Unit tests: **213 of 213 passing in 13 files** (Vitest 5.0.3, jsdom; run of 2026
 
 | Item | Status | Tests passing | A11y checked | Known gaps | Date |
 | --- | --- | --- | --- | --- | --- |
-| Workspace package `packages/ui` and exports map | done | `tsc`, ESLint (72 files, 0 findings) and `next build` pass | — | The eight category barrels are empty until Phase 2 | 2026-10-08 |
+| Workspace package `packages/ui` and exports map | done | `tsc`, ESLint (72 files, 0 findings) and `next build` pass | — | Seven of the eight category barrels are still empty; `layout` exports `Box` | 2026-10-09 |
 | Tokens: color | done | 12/12 `tokens.test.ts` (shared with typography and motion), 57/57 `contrast.test.ts` | `contrast-model`, `contrast-pixels` (Chromium, Firefox), `axe-browser` (Chromium, Firefox) | System colors are VERIFIED; labels, fills, separators and backgrounds are INFERRED. Accent ratios hold for the default accent only | 2026-10-08 |
 | Tokens: spacing, radii, concentric helper | done | 3/3 (`concentric`, in `GlassSurface.test.tsx`) | — | All radii and control heights are INFERRED. Spacing is Tailwind's 4 px scale: the HIG publishes none. CSS passes a concentric radius down one level only; deeper levels call `concentric()` | 2026-10-08 |
 | Tokens: typography | done | in `tokens.test.ts` | — | Apple's tracking table is not applied (it describes SF Pro). Emphasized weights are not tokens yet | 2026-10-08 |
@@ -210,9 +210,9 @@ Still stale after this round, outside the allowed edits: ARCHITECTURE.md 13.5 it
 - Measuring the glass budget on a mid-range laptop and a phone.
 - Any check in WebKit or Safari, and any screen-reader pass.
 - **Morph between different surfaces: pending** (morph entre superficies distintas: pendiente). Two different surfaces that share an identity, the brief's "shared IDs". `ViewTransition` is ruled out for glass; a FLIP on real elements is the candidate and is not built (D-032, ARCHITECTURE.md 6.4).
-- Whether the asymmetric edge becomes the default (it has a trial story; its edge band is not in the contrast model).
 - Reading the narrowest margin (light glass at the clear end, pressed, over black) in an engine or on a renderer other than the six setups under "Review round 3".
-- ARCHITECTURE.md 13.5 item 7 still says the recipe has not been reviewed by eye.
+
+Closed on 2026-10-09 with Phase 1 (D-038), and no longer open: the asymmetric edge stays a trial and is not the default; ARCHITECTURE.md 13.5 item 7 now says the recipe was reviewed by eye. Fine-tuning of the look is deferred to real components, tokens only. Still stale: the last line of ARCHITECTURE.md 13.6 ("The visual design has not been reviewed by a person"), which was outside the instruction.
 
 ## Phase 2: components (64)
 
@@ -220,9 +220,11 @@ Batch order from the brief: Layout, Menus and actions, Navigation and search, Pr
 
 ### Batch 1: Layout and organization (10)
 
+**Stopped after the first component, by the owner's instruction: Boxes is built as the template (D-039) and waits for review. The other nine are not started.**
+
 | # | Component | Tier | Status | Tests passing | A11y checked | Known gaps | Date |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 5 | Boxes | A | not started | — | — | | 2026-10-08 |
+| 5 | Boxes | A | done | 17/17 `Box.test.tsx`, 1/1 `layout/server.test.tsx`, `layout/box.spec.ts` 13/13 in Chromium and in Firefox | `axe-unit`, `keyboard` (not a tab stop; the tab order of its contents is unchanged), `axe-browser` (Chromium, Firefox), `contrast-model` (the two backgrounds it paints were already held to the floors in `contrast.test.ts`) | Exported as `Box`. Native markup, no React Aria, server-safe (D-039, proposed). No `<fieldset>` form. A nested box keeps the box radius and is not concentric with its parent. On glass or on a material it stays opaque. A density set on a subtree works one level deep. INFERRED: the title inside the box at iOS density, the title style, padding, radius and hairline border. Unverified in WebKit; `sr-manual` pending | 2026-10-09 |
 | 6 | Collections | A | not started | — | — | | 2026-10-08 |
 | 7 | Column views | A | not started | — | — | ARIA model undecided (tree or listboxes) | 2026-10-08 |
 | 8 | Disclosure controls | A | not started | — | — | | 2026-10-08 |
@@ -232,6 +234,18 @@ Batch order from the brief: Layout, Menus and actions, Navigation and search, Pr
 | 12 | Outline views | A | not started | — | — | | 2026-10-08 |
 | 13 | Split views | A | not started | — | — | No primitive; custom from APG | 2026-10-08 |
 | 14 | Tab views | A | not started | — | — | | 2026-10-08 |
+
+**Boxes, as checked on 2026-10-09** (this machine; Chromium and Firefox are Playwright's builds; WebKit cannot start here, so nothing below ran in Safari's engine; no screen reader was run).
+
+- Types and lint: `pnpm typecheck` and `pnpm lint` pass with no finding.
+- Unit (Vitest, jsdom): **231 of 231 in 15 files**, 18 of them new. `Box.test.tsx`, 17: the group is named by its title, by a title that is a node, and by `aria-label` or `aria-labelledby` when the caller gives one; no title element for `undefined`, `null`, `false` and `""`; one id per box; `role="region"`; children inside the content element; the marker a nested box looks for; class merging on the box and on its parts; attributes and `ref`; the box adds no tab stop and four Tab presses visit before, first, nested, after; two axe runs. `layout/server.test.tsx`, 1: renders with no DOM and no console message.
+- Real browser (`tests/browser/layout/box.spec.ts`, **13 of 13 in Chromium and in Firefox**): all five stories render with no console message; at macOS density, light and dark, the title ends above the frame and the frame (background, 1 px border, `--radius-box`) is on the content element; at iOS density the frame is on the box itself and the title starts below its top padding; a nested box paints `--background-tertiary` in both densities and both appearances; a density set on a subtree applies to it; right to left moves the title's inline padding and its text to the other edge; in forced colors the top edge of the frame has at least 3:1 against the pixel just inside it, read from a screenshot, at both densities.
+- axe in a real browser (`stories-axe.spec.ts`, now 28 stories, 5 of them Box's, 13 theme states per engine): **0 violations** in every state in Chromium and in Firefox; 478 rule passes per state (452 in forced colors). The nodes where axe could not determine contrast did not grow (15 in Chromium, 17 in Firefox, as before), so it measured every text node of the Box stories; the box is opaque and is not left to the pixel tests.
+- Server Component: a scratch route rendered `Box` inside `Box` from a Server Component and `next build` prerendered it as static. The HTML held both groups with their `aria-labelledby` and matching ids; the RSC payload held the two `role="group"` elements as plain elements; no JavaScript chunk contained the box's markup. The route was deleted afterwards and the app built again (`/` static).
+- Looked at, by me, in Chromium screenshots: the five stories in light and dark, both densities, right to left, increased contrast, forced colors and the 18-cell matrix. **The owner has not looked yet**; the look is INFERRED apart from what the HIG states (D-039).
+- Full browser suite, Chromium and Firefox together, one run: **81 passed, 2 skipped, 1 failed** (84 tests; the two skipped are the Firefox refraction renderings, as before). Chromium: 42 of 42. The failure is not in Boxes, see below.
+
+**A Phase 1 test is unstable in Firefox: `expand.spec.ts`.** In that full run "the element itself changes size and corner radius" failed in Firefox: 500 ms into a morph slowed to 1500 ms the radius had already reached its final value (16). Run again alone, three times each (`--repeat-each=3`, Firefox): with this session's changes 13 of 15 passed (that test failed once, and "it takes input while it moves and turns around from where it is" failed once); **on the base commit `8fa0b9b`, with this session's changes stashed, 14 of 15 passed and the same test failed once**. So it predates Boxes. The machine was idle (5% load, no leftover process). INFERRED cause, not established: the test waits a fixed 500 ms and then reads the box and the radius in separate round trips, and Firefox is slow enough here, with another worker recording video, for the reads to land after the morph has ended. Nothing was changed: the file is Phase 1's and outside this session's instruction. PROGRESS.md recorded 5 of 5 for this file on 2026-10-09; that was one run.
 
 ### Batch 2: Menus and actions (12)
 
@@ -328,9 +342,9 @@ Batch order from the brief: Layout, Menus and actions, Navigation and search, Pr
 | --- | --- |
 | Components | 64 |
 | Tier A / B / C | 46 / 14 / 4 |
-| not started | 64 |
+| not started | 63 |
 | in progress | 0 |
-| done | 0 |
+| done | 1 (Boxes; its template awaits the owner's review) |
 | blocked | 0 |
 
 ## Session log
@@ -342,3 +356,4 @@ Batch order from the brief: Layout, Menus and actions, Navigation and search, Pr
 | 2026-10-08 | Phase 1, review round 1 | The owner reviewed the playground and reported two problems: the morph lost its blur and veil mid-flight, and the glass read as milky frosted glass with no edge curvature and a clear end that was not clear. (1) Measured from video frames that `ViewTransition` is the cause; replaced it with the real element growing (`GlassSurface expanded`, new `GlassReveal`); removed `glassId`, `useGlassMorph` and the morph view-transition CSS; `GlassGroup` is now layout only and server-safe. D-032 supersedes D-027. (2) Added a comparison story with six recipes and their computed contrast verdicts; added inert knobs to `glass.css` and props to `GlassFilterDefs` so a recipe is only numbers; changed no default. D-033. Only `packages/ui`, PROGRESS.md and DECISIONS.md were edited in this round. Nothing committed |
 | 2026-10-09 | Phase 1, review round 2 | The owner committed Phase 1 (`2fdf5b2`) and chose recipe 2 as the default, discarded recipe 6, and asked for a separate trial story of the asymmetric edge on recipe 2, a re-check of contrast on real pixels with 5:1 for the secondary label, an update of ARCHITECTURE.md's morph section, and "morph between different surfaces: pending" here. Done: recipe 2 moved into `glass.css` (increased contrast left as it was); recipes module, comparison story and tests updated; trial story added; pixel fixture extended to hovered and pressed states; ARCHITECTURE.md 6.4 and the lines depending on it rewritten. Result: every floor holds with thresholds unchanged; 5:1 holds at rest everywhere and in every state at the default setting, and not on hovered or pressed light glass near the clear end (4.86 and 4.53 in Chromium). Edited outside `packages/ui`: ARCHITECTURE.md and this file only. DECISIONS.md and `.gitignore` not touched. Nothing committed |
 | 2026-10-09 | Phase 1, review round 3 | The owner accepted the margin at the clear end in light appearance (hovered 4.86, pressed 4.53, on a floor of 4.5) with the recipe unchanged, and asked for it to be documented as the narrowest margin in the library, for a check of whether the pressed test is fragile, and for DECISIONS.md to be brought up to date with new entries. Done: the margin is stated in the token comment of `glass.css`, in `glass-pixels.spec.ts` and here; the pressed surface was read in six setups (two engines, with and without a window, screenshot and video, plus installed Chrome and Edge): identical on repeat runs, different by up to one 8-bit level between engines and renderers (4.51 to 4.56), and one level lower would fail; the spec now prints its headroom. DECISIONS.md gained D-034 (recipe 2 is the default; resolves D-033), D-035 (the accepted margin), D-036 (Firefox model tolerance, 4 to 6 levels) and D-037 (the real-element morph confirmed; D-027 stays superseded). No recipe value and no threshold changed. Edited outside `packages/ui`: this file and DECISIONS.md. ARCHITECTURE.md and `.gitignore` not touched. Nothing committed |
+| 2026-10-09 | Phase 1 closed; Phase 2, batch 1, first component | The owner committed rounds 2 and 3 (`8fa0b9b`), closed Phase 1 (recipe 2 by eye as the default, the asymmetric edge a trial and not the default, fine-tuning later with real components and tokens only) and asked for the Layout category with one component first, Boxes, as the template, then a stop. Done: D-038 records the closure and ARCHITECTURE.md 13.5 item 7 is corrected. Read again: HIG Boxes, the SwiftUI `GroupBox` and AppKit `NSBox` references, ARIA in HTML, and the bundled Next.js guide on the server and client boundary (SOURCES.md section 12). Built `Box` in `packages/ui/src/layout/box` (component, styles, 17 unit tests, 5 stories), `layout/server.test.tsx`, `tests/browser/layout/box.spec.ts`; added the `--radius-box` token, a `plain` backdrop to the story kit and "Layout" to the Storybook sort order. Decided and proposed in D-039: native markup with no React Aria and no `"use client"`, a `title` prop, no `<fieldset>` form, and the file set every component follows; COMPONENT-MAP.md row 5 and its totals follow that. Result: typecheck, lint and 231 unit tests pass; the Box browser spec passes in Chromium and Firefox; axe finds no violation in 28 stories by 13 theme states in both engines; `next build` renders `Box` from a Server Component. One failure in the full browser run, in Firefox, in Phase 1's `expand.spec.ts`: shown to fail intermittently on the base commit as well, and left untouched. Scratch files (a fieldset test, a screenshot spec, the route `app/box-check`) were deleted. `.gitignore` and `next.config.ts` not touched. Nothing committed |
