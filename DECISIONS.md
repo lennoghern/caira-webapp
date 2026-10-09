@@ -2,7 +2,7 @@
 
 Architectural decisions and their reasons, so a new session can continue without deciding again. Add a new entry for every decision; never rewrite an old one, supersede it.
 
-Evidence labels and source IDs are defined in SOURCES.md. **Last updated: 2026-10-08 (Phase 1, after review round 1). Entries D-001 to D-022 are from Phase 0 and are left as written; D-023 onward record what was decided since and say which earlier entry they amend. D-027 is superseded by D-032.**
+Evidence labels and source IDs are defined in SOURCES.md. **Last updated: 2026-10-09 (Phase 1, after review round 3). Entries D-001 to D-022 are from Phase 0 and are left as written; D-023 onward record what was decided since and say which earlier entry they amend. D-027 is superseded by D-032 (confirmed in D-037). D-033 is resolved by D-034.**
 
 ## Status values
 
@@ -14,11 +14,13 @@ Evidence labels and source IDs are defined in SOURCES.md. **Last updated: 2026-1
 
 Answered on 2026-10-08 and recorded in D-023: D-001, D-009, D-010, D-012, D-013, D-014.
 
+Answered on 2026-10-09: D-033 (which recipe is the default: recipe 2, recorded in D-034), and the margin that choice left at the clear end (accepted, D-035). The two-surface morph of D-032 was marked pending by you (D-037); it stays in the table because nothing is built.
+
 | ID | Question | Blocks |
 | --- | --- | --- |
 | D-024 | Storybook cannot start on this machine (Smart App Control blocks a native module). Allow the WebAssembly build, change the setting yourself, keep the stand-in, or switch to Ladle? | The playground application. Visual review can use `pnpm stories` meanwhile |
-| D-033 | Which glass recipe becomes the default? Six are side by side in the story "Foundations/Glass recipes". (This is the review D-025 asked for; your first pass found the current look milky.) | Sign-off on Phase 1 visuals |
-| D-032 | Morphing between two different surfaces that share an identity is not built. Build it as a FLIP on real elements, or leave it until a component needs it? | Batches that would morph one surface into another (Live Activities, Action sheets) |
+| D-034 | Does the asymmetric edge (recipe 5) go onto the default glass? It has a trial story, "Foundations/Glass recipes: Asymmetric edge on the default". Its edge band is not in the contrast model yet | Nothing; the default ships without it |
+| D-032, D-037 | Morphing between two different surfaces that share an identity is not built, and is pending by your instruction of 2026-10-09. Build it as a FLIP on real elements, or leave it until a component needs it? | Batches that would morph one surface into another (Live Activities, Action sheets) |
 | D-031 | Raise the root `@types/node` from 20 to 24 to match the Node 24 runtime and Vitest 5's peer range? | Nothing; it removes a warning |
 | D-003 | The menu bar: Base UI exception or custom build? | Menus batch (after a spike) |
 | D-019 | Notifications: React Aria's unstable toast or Base UI's? | System experiences batch |
@@ -337,3 +339,81 @@ The owner reviewed the playground and reported that the morph lost its blur and 
 - **Increased contrast** is outside the comparison: it keeps its own, more opaque tokens whichever recipe is chosen, and with it switched on the story shows that glass in every cell.
 - **What adopting a recipe involves**: moving its numbers into the token blocks; teaching `contrast.test.ts` the clarity-dependent filter steps and, for recipes 5 and 6, the edge band, which is not modelled yet; and, for recipes 3 and 6 only, changing what that test asserts at the clear end from "keeps the floor" to a documented limit, as the `clear` variant has today. That narrows the scope of the guarantee, which you allowed for the clear end; it does not lower a threshold.
 - **Not verified**: how any of this looks to a person, which is the point of the story; anything in WebKit; the rim outside Chromium with a GPU. The "photo" is a scene drawn in SVG, not a photograph.
+
+---
+
+# Phase 1, review rounds 2 and 3 (2026-10-09)
+
+The owner looked at the comparison of D-033 and chose a recipe by eye, asked for the contrast to be read again on real pixels with 5:1 for the secondary label, and then accepted the one margin that came out thin. Rules that held throughout: no test threshold is lowered; AA holds at the default setting and under increased contrast; looks are chosen by the owner by eye. The entries above are left as written; where one of these four disagrees with an earlier entry, the later one is right.
+
+## D-034 Recipe 2, "less veil, more saturation", is the default regular glass
+
+- **Status**: Decided by the owner on 2026-10-09, by eye, from the story "Foundations/Glass recipes". One follow-up **needs your decision** (the edge, below).
+- **Resolves**: D-033, which is closed: the comparison it describes was made and a recipe was chosen. **Amends**: D-025. Its method and its guarantee stand; its numbers, its "within 1.3 and 2.1 of 255" and its remark that dark glass is close to opaque describe the default it had then.
+- **Decision**:
+  1. Recipe 2 is the default for regular glass, in light and in dark.
+  2. Recipe 6 (the combination of 2, 3 and 5) is discarded as illegible. It is removed from the story and from `glass-recipes.ts`.
+  3. The asymmetric edge of recipe 5 is not adopted. It is tried on top of recipe 2 in a story of its own, "Foundations/Glass recipes: Asymmetric edge on the default".
+  4. Recipes 1, 3 and 4 stay in the comparison story as a record: 1 as the previous default, 3 and 4 as not adopted.
+- **The values that ship** (`glass.css`; all INFERRED, chosen by eye and held by the tests):
+
+  | Token | Light | Dark |
+  | --- | --- | --- |
+  | `--glass-tint-color` | `rgb(255 255 255)` | `rgb(22 22 24)` |
+  | `--glass-saturate` | 2.6 | 2.4 |
+  | `--glass-contrast` | 0.35 | 0.4 |
+  | `--glass-brightness` | 1.85 | 0.3 |
+  | `--glass-alpha-tinted` / `-clear` / `-min` / `-max` | 0.5 / 0.06 / 0.06 / 0.96 | the same |
+  | `--glass-blur-tinted` / `-clear` | 26px / 6px (16px at the default setting) | the same |
+  | `--glass-sheen` | white at 12% | white at 4% |
+
+- **Left as it was**: increased contrast keeps the more opaque recipe it had, blur included (40px and 10px), because there legibility outranks the look. The four materials, the `clear` variant, colored glass and the knobs D-033 added are unchanged, and no knob is set by default.
+- **Verified, thresholds unchanged**: `contrast.test.ts` passes on the new tokens exactly as it stood (57 of 57). `glass-recipes.test.ts` (24 of 24) checks that recipe 2 equals the shipped tokens. `glass-pixels.spec.ts` reads 52 painted surfaces in Chromium and in Firefox: every floor holds; the painted color is within 1.4 (Chromium) and 4.1 (Firefox) of 255 of the model (see D-036). The margins are in D-035.
+- **What it costs**: the lift that keeps text legible now comes mostly from the filter steps, so less whitening, and less margin where the veil used to help: the clear end over a black backdrop in light appearance (D-035).
+- **Open, needs your decision**: whether the asymmetric edge becomes part of the default. Its glow and shadow reach about 10 px in from the top and bottom, and that band is not in the contrast model, so adopting it means modelling it first.
+- **Not verified**: anything in WebKit; the refraction rim outside Chromium with a GPU.
+
+## D-035 The secondary label has 5:1 at rest, and the margin at the clear end is accepted
+
+- **Status**: Decided by the owner on 2026-10-09, in two steps: the 5:1 requirement in round 2, the acceptance in round 3.
+- **Decision**:
+  1. On top of the floors, the secondary label has at least 5:1 on every surface at rest. It is asserted in the model along the whole clarity slider (`glass-recipes.test.ts`) and on painted pixels in both engines (`SECONDARY_AT_REST` in `glass-pixels.spec.ts`).
+  2. The floors stay where they were: 4.5:1 for primary and secondary labels and 3:1 for tertiary, in every interaction state; 7:1 and 4.5:1 under increased contrast.
+  3. 5:1 is not required of a hovered or pressed surface. On light glass at the clear end over black the secondary label is 4.86 hovered and 4.53 pressed (Chromium; 4.85 and 4.51 in Firefox). **The owner accepts that margin and the recipe does not change.**
+- **The narrowest margin in the library** (LOCAL, painted pixels, 2026-10-09): the secondary label on light regular glass at the clear end (clarity 1), pressed, over pure black. It is 0.01 to 0.03 above 4.5:1 where the tests run. Only that combination: at the default clarity the pressed case is 5.44 in the model, and in dark appearance the secondary label on glass is never under 6.03.
+- **Checked against everything else**: the 2,364 ratios `contrast.test.ts` holds to a floor were listed by margin. That surface is first in the model too (4.58). The next are accent-colored text on the dark tertiary background (4.65 on a floor of 4.5) and the focus ring on the light secondary background (3.16 on a floor of 3).
+- **How stable the reading is** (the pressed surface, gray level of 255; the secondary label reaches 4.5:1 at 141.65):
+
+  | Setup | Painted | Ratio | Levels above the floor |
+  | --- | --- | --- | --- |
+  | Firefox 157 headless (the suite) | 142.00 | 4.51 | 0.35 |
+  | Chromium 156 headless, software rendering (the suite) | 142.47 | 4.53 | 0.82 |
+  | Chromium 156, Chrome 154, Edge 155 and Firefox 157 with a window (GPU) | 143.00 | 4.56 | 1.35 |
+
+  Repeat runs of one setup gave the same figure every time, so the test does not flicker. It does depend on the engine and on what draws the page, by up to one 8-bit level, and the two setups the suite uses are the tightest. A setup that painted 141 would give 4.47:1 and fail. Not measured: WebKit, another GPU or driver, another operating system, a later browser version. The full table is in PROGRESS.md, "Review round 3".
+- **If that test fails on another setup**: it is a real shortfall of a few hundredths there, not noise. The floor is not lowered and the model tolerance of D-036 does not apply (the ratio is computed from the painted color). The fix is one of the options below, and that choice is the owner's.
+- **Options offered and not taken** (each alone brings the pressed case to 5:1 or more in the model): raise the light `--glass-alpha-clear` from 0.06 to 0.20 (5.12; the clear end gets a 20% veil); raise the light `--glass-brightness` from 1.85 to 2.05 (5.17; lifts dark backdrops more at every setting); cut the light hover and pressed overlays to 2% and 3.5% (5.02; the press feedback becomes hard to see).
+- **Where it is written down**: the token comment in `glass.css`, the comment on `TIGHTEST_SURFACE` in `glass-pixels.spec.ts`, which also prints the headroom in levels on every run, and PROGRESS.md.
+- **Still true from D-025**: the `clear` variant is outside the guarantee altogether. This entry is about regular glass with the clarity setting at its clear end, which is inside it.
+
+## D-036 The model check allows Firefox 6 levels of 255 instead of 4
+
+- **Status**: Taken while working in round 2 and reported then; recorded here at the owner's request. Stands unless you object.
+- **What changed**: `glass-pixels.spec.ts` compares each painted surface with the color the model predicts. The allowed distance was 4 levels of 255 for every engine. It is still 4 for Chromium and is now 6 for Firefox (`TOLERANCE_BY_ENGINE`).
+- **Why**: with recipe 2, Firefox paints dark glass at the clear end over a white backdrop 3 to 4 levels lighter than the model and than Chromium: 55, 68 and 73 at rest, hovered and pressed, where both have 52, 64 and 70. Its largest distance from the model is 4.1 of 255 (Chromium: 1.4). With the previous default the largest distances were 1.3 and 2.1 (D-025); that recipe had a heavier veil and a wider blur at the clear end, which left less of the filter's output showing.
+- **Why it is the engine and not the measurement**: Firefox is read from a recorded video, because its screenshots leave out `backdrop-filter`. A Chromium recording read the same way matches Chromium's own screenshots, so the video is not what shifts the figure. What inside Firefox produces the difference is not established.
+- **What it is not**: a contrast threshold. Every ratio is computed from the painted color itself, never from the model, so this number cannot hide a failure of a floor. On that surface Firefox's lighter paint costs contrast under the light text and is counted: 7.64 at rest against Chromium's 8.03, with a floor of 4.5.
+- **Why 6**: it leaves about two levels over what was measured. 4 would fail the run on an engine difference that reaches no floor; a wider one would stop catching a real divergence between the model and the tokens.
+- **Limit**: the tolerance is per engine, not per surface, so every Firefox surface gets 6 although only one needs it. Of the 52 Firefox surfaces, the hovered one of those three is the only one over 4 levels (4.1), the other two are about 3 away, and the remaining 49 are within 2. In Chromium all 52 are within 1.4.
+
+## D-037 Morphing: the real element is confirmed, and D-027 stays superseded
+
+- **Status**: Decided for what is built (the owner's instruction of round 1, kept after the review of 2026-10-09). The morph between two different surfaces is **pending** by the owner's instruction.
+- **Confirms**: D-032, which already made this change on 2026-10-08. **Supersedes**: D-027, and the proposal in D-007. Nothing in D-027 is in the code: `glassId`, `useGlassMorph` and the `glass-morph` view-transition rules are gone.
+- **The decision, restated**: a glass surface that expands or collapses is the real element changing size (`GlassSurface expanded`, with `GlassReveal` around the part that appears), not a view transition. The reason is the measurement in D-032: a view transition animates a picture of the surface, and the picture lost its blur and veil for the whole change.
+- **What changed since D-032 was written**:
+  1. ARCHITECTURE.md was brought up to date on 2026-10-09: section 6.4 is rewritten, and the lines that depended on it in sections 4, 6.2, 7 and 13.2 to 13.5. The "Stale elsewhere" note in D-032 no longer applies.
+  2. The question D-032 left open has an answer for now: **morph between different surfaces: pending**. It is not built and not scheduled. A view transition stays ruled out for glass; a FLIP on real elements is the candidate (React Aria's `SharedElementTransition` is installed). The one sample of bare backdrop seen at the swap in the control run has still not been investigated.
+  3. Browser support for the mechanism (STANDARD, MDN browser-compat-data): animating grid tracks needs Chrome 107, Firefox 66 or Safari 16, all inside the baseline of D-008. No View Transitions API is needed.
+- **Verified again on 2026-10-09**, with recipe 2 as the default: `expand.spec.ts`, 5 of 5 in Chromium and in Firefox. The file's time limit is now 90 seconds, because one Firefox test took 40 seconds in a full run with other workers recording video and 16 seconds alone; the assertions are the same.
+- **Not verified**: WebKit.

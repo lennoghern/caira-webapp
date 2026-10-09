@@ -4,6 +4,7 @@ import { readStyleFile, resolveTokens } from "./css-tokens";
 import {
   CLEAR_CLARITY,
   DEFAULT_CLARITY,
+  EDGE_ON_DEFAULT,
   FLOORS,
   GLASS_RECIPES,
   LABELS,
@@ -22,6 +23,7 @@ import {
  */
 
 const APPEARANCES: readonly RecipeAppearance[] = ["light", "dark"];
+const SLIDER = [0, 0.25, 0.5, 0.75, 1];
 const recipe = (id: string): GlassRecipe => {
   const found = GLASS_RECIPES.find((candidate) => candidate.id === id);
   if (!found) throw new Error(`No recipe "${id}"`);
@@ -85,8 +87,9 @@ describe("where each recipe keeps the contrast floors", () => {
   const PASS = { black: true, white: true };
   /** Over which backdrops every label level keeps its floor. `false` is a documented failure. */
   const EXPECTED: Record<string, Record<"default" | "clear", Record<RecipeAppearance, { black: boolean; white: boolean }>>> = {
+    "previous-default": { default: { light: PASS, dark: PASS }, clear: { light: PASS, dark: PASS } },
+    // Recipe 2, the default since 2026-10-09.
     current: { default: { light: PASS, dark: PASS }, clear: { light: PASS, dark: PASS } },
-    "less-veil": { default: { light: PASS, dark: PASS }, clear: { light: PASS, dark: PASS } },
     // The clear end is nearly bare glass: dark text over dark content, or light over light, is lost.
     "clear-end": {
       default: { light: PASS, dark: PASS },
@@ -98,10 +101,6 @@ describe("where each recipe keeps the contrast floors", () => {
       clear: { light: { black: false, white: true }, dark: { black: true, white: false } },
     },
     "asymmetric-edge": { default: { light: PASS, dark: PASS }, clear: { light: PASS, dark: PASS } },
-    combined: {
-      default: { light: PASS, dark: PASS },
-      clear: { light: { black: false, white: true }, dark: { black: true, white: false } },
-    },
   };
 
   it("has an expectation for every recipe", () => {
@@ -138,10 +137,72 @@ describe("where each recipe keeps the contrast floors", () => {
 
   it("the shipped recipe keeps it along the whole slider", () => {
     for (const appearance of APPEARANCES) {
-      for (const clarity of [0, 0.25, 0.5, 0.75, 1]) {
+      for (const clarity of SLIDER) {
         const verdict = recipeVerdict(recipe("current"), appearance, clarity);
         expect([...verdict.black.failing, ...verdict.white.failing], `${appearance}, clarity ${clarity}`).toEqual([]);
       }
     }
+  });
+});
+
+describe("the shipped recipe and the owner's 5:1 for the secondary label", () => {
+  // Asked for on 2026-10-09 when recipe 2 became the default. It sits on top of
+  // the WCAG floors above; it replaces none of them.
+  const WANTED = 5;
+  const lowestSecondary = (appearance: RecipeAppearance, clarity: number, states: "all" | "rest") => {
+    const verdict = recipeVerdict(recipe("current"), appearance, clarity, states);
+    return Math.min(verdict.black.ratios.secondary, verdict.white.ratios.secondary);
+  };
+
+  it("holds on a surface at rest along the whole slider", () => {
+    for (const appearance of APPEARANCES) {
+      for (const clarity of SLIDER) {
+        expect(lowestSecondary(appearance, clarity, "rest"), `${appearance}, clarity ${clarity}`).toBeGreaterThanOrEqual(WANTED);
+      }
+    }
+  });
+
+  it("holds in the hovered and pressed states too at the default setting", () => {
+    for (const appearance of APPEARANCES) {
+      expect(lowestSecondary(appearance, DEFAULT_CLARITY, "all"), appearance).toBeGreaterThanOrEqual(WANTED);
+    }
+  });
+
+  it("does not hold while a light surface at the clear end is hovered or pressed, and this says by how much", () => {
+    // The one place the shipped glass is under 5:1, pinned so it cannot move
+    // unnoticed: light appearance, clear end, over a black backdrop, while an
+    // interactive surface is hovered or pressed. It is still above the 4.5:1 floor.
+    const light = lowestSecondary("light", CLEAR_CLARITY, "all");
+    expect(light).toBeLessThan(WANTED);
+    expect(light).toBeGreaterThanOrEqual(FLOORS.secondary);
+    expect(light).toBeCloseTo(4.58, 1);
+    // Dark appearance stays above 5:1 in every state, everywhere on the slider.
+    for (const clarity of SLIDER) {
+      expect(lowestSecondary("dark", clarity, "all"), `dark, clarity ${clarity}`).toBeGreaterThanOrEqual(WANTED);
+    }
+  });
+});
+
+describe("the asymmetric edge on the default (a trial, not the default)", () => {
+  it("changes nothing but the edge and the refraction filter", () => {
+    for (const appearance of APPEARANCES) {
+      const { edge, ...fill } = EDGE_ON_DEFAULT[appearance];
+      expect(fill).toEqual(recipe("current")[appearance]);
+      expect(edge).toBe(recipe("asymmetric-edge")[appearance].edge);
+      const style = recipeStyle(EDGE_ON_DEFAULT, appearance, DEFAULT_CLARITY);
+      expect(style["--glass-edge"]).toBe(edge);
+      expect(style["--glass-refraction-filter"]).toBe('url("#glass-recipe-edge-on-default")');
+    }
+    expect(EDGE_ON_DEFAULT.refraction).toEqual(recipe("asymmetric-edge").refraction);
+  });
+
+  it("keeps the floors in the body of the surface, like the default it sits on", () => {
+    for (const appearance of APPEARANCES) {
+      for (const clarity of SLIDER) {
+        expect(recipeVerdict(EDGE_ON_DEFAULT, appearance, clarity)).toEqual(recipeVerdict(recipe("current"), appearance, clarity));
+      }
+    }
+    // The band the glow and shadow reach is outside the model, and says so.
+    expect(EDGE_ON_DEFAULT.notModelled).toMatch(/10 px/);
   });
 });

@@ -2,7 +2,7 @@
 
 How the component library is built.
 
-Sections 1 to 12 are the Phase 0 plan, kept as written. **Section 13 says what Phase 1 actually built and where it departs from the plan; where the two disagree, section 13 and DECISIONS.md D-023 to D-031 win.**
+Sections 1 to 12 are the Phase 0 plan, kept as written. **Section 13 says what Phase 1 actually built and where it departs from the plan; where the two disagree, section 13 and DECISIONS.md D-023 onward win.** One exception to "kept as written": the morph was replaced after review, so section 6.4 and the lines that depend on it were rewritten on 2026-10-09 and say so.
 
 Evidence labels (VERIFIED, STANDARD, VENDOR, LOCAL, REPORTED, INFERRED) are defined in SOURCES.md section 1. Source IDs such as A20 or W4 point to rows in that file. Decisions are numbered in DECISIONS.md.
 
@@ -98,14 +98,14 @@ Fact: every `react-aria-components` export file contains `import "client-only"` 
 
 | Kind of file | Directive | Examples |
 | --- | --- | --- |
-| Anything that imports React Aria, uses a hook, or handles events | `"use client"` at the top | All 43 React Aria-backed components, the 11 custom components that compose React Aria parts, `LiquidGlassProvider`, `GlassGroup`, the toolbar overflow logic, `Window` |
-| Pure markup and class names | none (server-safe) | `Icon`, `Material`, static `GlassSurface`, `ThemeScript`, `*.styles.ts`, layout wrappers that do not use React Aria |
+| Anything that imports React Aria, uses a hook, or handles events | `"use client"` at the top | All 43 React Aria-backed components, the 11 custom components that compose React Aria parts, `LiquidGlassProvider`, the toolbar overflow logic, `Window` |
+| Pure markup and class names | none (server-safe) | `Icon`, `Material`, `GlassSurface`, `GlassReveal`, `GlassGroup`, `ThemeScript`, `*.styles.ts`, layout wrappers that do not use React Aria |
 | CSS | n/a | tokens, utilities |
 
 Rules:
 
 1. The boundary is the component file, never the category barrel. A barrel with `"use client"` would turn server-safe exports into client ones.
-2. `GlassSurface` is server-safe. Its hover, press and focus response comes from CSS and from the data attributes of the control it wraps, not from its own handlers. Only the click "bounce" and morphing need client code, and those live in `GlassGroup` and in the controls.
+2. `GlassSurface` is server-safe. Its hover, press and focus response comes from CSS and from the data attributes of the control it wraps, not from its own handlers. The click "bounce" and the grow-and-shrink animation are CSS too (section 6.4), so nothing in the glass layer needs client code; only the control that toggles a surface does.
 3. Function props do not cross from a Server Component into a client one. Render-prop `className` functions and event handlers must be written in client files. Each component's docs say so.
 4. Every component's JSDoc states whether it is client or server-safe.
 
@@ -170,7 +170,8 @@ A `@custom-variant dark` keyed on `data-appearance="dark"`, with the system pref
 | Web API | Apple reference | Notes |
 | --- | --- | --- |
 | `<GlassSurface variant="regular \| clear" tint shape interactive dim>` | `glassEffect(_:in:)`, `Glass`, `NSGlassEffectView` | `shape`: `capsule`, `rounded`, `circle`, `concentric`. `dim` adds the dimming layer for `clear` |
-| `<GlassGroup spacing>` with `glassId` on children | `GlassEffectContainer`, `glassEffectID(_:in:)` | Shared-identity morph between surfaces |
+| `<GlassSurface expanded>` with `<GlassReveal expanded axis>` | one view changing size inside a `GlassEffectContainer` | A surface that grows and shrinks as the real element (section 6.4) |
+| `<GlassGroup spacing>` | `GlassEffectContainer`, `glassEffectID(_:in:)` | Layout only. Shapes do not fuse, and the shared-identity morph between different surfaces is pending (section 6.4) |
 | `<Material thickness="ultraThin \| thin \| regular \| thick">` | SwiftUI `Material` | Content layer |
 | `concentric(outerRadius, padding)` and a `rounded-concentric` utility | `ConcentricRectangle`, `.containerConcentric` | inner radius = outer radius minus padding, floored at a minimum |
 | `<LiquidGlassProvider>` | system settings | Section 5.2 |
@@ -195,12 +196,20 @@ Consequences:
 
 ### 6.4 Morphing
 
-React 19.3 ships `<ViewTransition>`; the types are present in the installed `@types/react` (L8) and the bundled Next.js guide documents it (L6).
+Rewritten on 2026-10-09. The Phase 0 plan here was React `<ViewTransition>` with shared names; Phase 1 built it, measured it, and replaced it (DECISIONS.md D-032, which supersedes D-007 and D-027).
 
-- `GlassGroup` gives each surface a transition name and wraps state changes in a transition. Per the guide, plain `setState` does not trigger view transitions; a transition, Suspense or a deferred value does.
-- Browsers without the API apply the change instantly. That is the no-animation fallback, at no extra cost.
-- React Aria also exports `SharedElementTransition` and `SharedElement` (L1). Phase 1 compares the two and keeps one (D-007).
-- Under reduced motion, durations collapse to zero for moving transitions; opacity cross-fades may stay.
+**One surface that grows and shrinks: built.** The surface animates as the real element.
+
+- `GlassSurface` takes `expanded`. The part that appears goes in `GlassReveal`, a grid whose track animates between `0fr` and `1fr`: the height, and with `axis="both"` the width, which needs content of a definite width. Nothing is measured in script.
+- The surface animates its corner radius between a capsule radius (`--glass-radius-collapsed`, 22 px by default, a capsule up to 44 px tall) and the radius of its `size`, and its padding if that changes.
+- All of it is CSS in `glass.css` (`glass-expandable`, `glass-reveal`) on `--motion-duration-morph` (350 ms). `GlassSurface`, `GlassReveal` and `GlassGroup` are server-safe; there is no client code for this.
+- While it moves it takes input and reverses from the size it has reached. Collapsed content is `visibility: hidden`: out of the tab order and not read. The control that toggles it stays outside the reveal, so focus is never hidden with it.
+- Under reduced motion the size changes at once and only the fade of the content remains.
+- It needs no View Transitions API, so it behaves the same in every browser of the baseline.
+
+**Why not a view transition.** A view transition animates a snapshot of the surface, not the surface. Read from video frames (PROGRESS.md, "Morphing, second round"): with the page root left out of the transition, which is what kept the rest of the page live, the snapshot's backdrop filter had nothing behind it and the blur and veil were gone for the whole change, then back in one frame. With the root included the blur mostly held, but the whole page was a frozen picture meanwhile. In both forms the surface took no click until the end. The library now starts no view transition. `motion.css` still honors reduced motion for the view transitions an app may run between routes.
+
+**Morph between different surfaces: pending.** Two different surfaces that share an identity, Apple's `glassEffectID(_:in:)` and the brief's "shared IDs", do not morph into each other yet. A view transition is ruled out for glass by the measurement above. What remains is a FLIP on real elements; React Aria's `SharedElementTransition`, already installed, is one. In a control run it kept the material, but one 40 ms sample at the swap showed bare backdrop, and that was not investigated. It also swaps two elements, so keyboard focus has to be restored by the caller. Not built; `GlassGroup` is layout only (a gap) until it is.
 
 ## 7. Browser support and fallbacks (STANDARD)
 
@@ -213,8 +222,9 @@ Versions from MDN browser-compat-data 8.1.5 (W4). "Current" on 2026-10-08: Chrom
 | `backdrop-filter` (blur, saturate, brightness) | 76 / 79 | 103 (123 on unknown GPUs) | 18 unprefixed; 9 with `-webkit-` | Glass tier 1, materials | Emit both properties. Without support: tier 0 solid. 96.36% global |
 | `backdrop-filter: url()` with SVG filters | Works | Not applied | Not applied | Glass tier 2 refraction | Tier 1 |
 | SVG `feDisplacementMap`, `feSpecularLighting` | 5 / 12 | 3 | 6 | Filter definitions | Not rendered outside tier 2 |
-| View Transitions, same document | 111 | 144 | 18 | Glass morphing, route transitions | Instant change. 91.75% global |
-| `view-transition-class` | 125 | 144 | 18.2 | Shared morph styling | Per-name rules |
+| View Transitions, same document | 111 | 144 | 18 | Route transitions in the app. Not used by the library since 2026-10-09 (section 6.4) | Instant change. 91.75% global |
+| `view-transition-class` | 125 | 144 | 18.2 | Not used by the library since 2026-10-09 | n/a |
+| Animating `grid-template-rows` and `grid-template-columns` ("Animation of tracks") | 107 | 66 | 16 | Growing and shrinking a glass surface (section 6.4). Versions from MDN browser-compat-data, main branch, read 2026-10-09. Animating between `0fr` and `1fr` was observed in Chromium and Firefox here; WebKit was not run | The change applies at once |
 | `prefers-reduced-motion` | 74 / 79 | 63 | 10.1 | Motion | n/a |
 | `prefers-contrast` | 96 | 101 | 14.1 | Higher-contrast theme | Manual `data-contrast` |
 | `prefers-reduced-transparency` | 118 | flag only | **No** | Tier 0 switch | **Manual `data-transparency` override is mandatory**; Safari users have no automatic path |
@@ -377,7 +387,7 @@ packages/ui/
   src/styles/             index.css, variants.css (new), tokens.css, materials.css, glass.css, motion.css, a11y.css
   src/foundations/
     theme/                LiquidGlassProvider, LiquidGlassScope (new), ThemeScript, useLiquidGlass, useMediaQuery, store
-    glass/                GlassSurface, GlassGroup + useGlassMorph, GlassFilterDefs, glassSurface(), concentric(), refraction detection
+    glass/                GlassSurface, GlassReveal, GlassGroup, GlassFilterDefs, glassSurface(), concentric(), refraction detection
     materials/            Material, material()
     icon/                 Icon, createIcon(), registry
     utils/                cn(), tv(), tailwind-merge configuration
@@ -404,15 +414,16 @@ Existing files changed, all from the list in section 11: `pnpm-workspace.yaml`, 
 | Not planned | `LiquidGlassScope` for subtree theming | Needed for the theme matrix, and for dark or dense islands in an app | D-028 |
 | "Apps can replace the registry" | `createIcon(registry)`; no runtime global swap | A Server Component cannot read context | D-029 |
 | `vite-tsconfig-paths` in the Vitest setup | Removed | Vite 8 resolves tsconfig paths itself; the package has no aliases | D-031 |
-| `GlassSurface` props `variant tint shape interactive dim` | Plus `size`, `bounce`, `appearance`, `glassId`, `as` | Larger surfaces are more opaque (HIG Color); macOS 27 bounce; manual stand-in for backdrop adaptivity | D-025, D-027 |
+| `GlassSurface` props `variant tint shape interactive dim` | Plus `size`, `bounce`, `appearance`, `expanded`, `as` | Larger surfaces are more opaque (HIG Color); macOS 27 bounce; manual stand-in for backdrop adaptivity; growing and shrinking | D-025, D-032 |
+| Morphing with React `ViewTransition` and shared names (`glassId`, `useGlassMorph`) | Built, measured, then replaced on 2026-10-09: one surface grows as the real element (`GlassSurface expanded`, `GlassReveal`). A morph between different surfaces is pending | A view transition animates a snapshot, which lost the blur and veil for the whole change | D-032 (supersedes D-027) |
 
 ### 13.4 Server and client, as built
 
 | Export | Kind |
 | --- | --- |
-| `GlassSurface`, `GlassFilterDefs`, `Material`, `Icon`, `ThemeScript`, `LiquidGlassScope`, `cn`, `tv`, `glassSurface`, `material`, `concentric`, `concentricContainerStyle`, `createIcon` | Server-safe: no directive, no hooks |
-| `LiquidGlassProvider`, `GlassGroup`, `RouterProvider` (`@caira/ui/next`) | Client Components |
-| `useLiquidGlass`, `useGlassMorph`, `useMediaQuery` | Client hooks |
+| `GlassSurface`, `GlassReveal`, `GlassGroup`, `GlassFilterDefs`, `Material`, `Icon`, `ThemeScript`, `LiquidGlassScope`, `cn`, `tv`, `glassSurface`, `material`, `concentric`, `concentricContainerStyle`, `createIcon` | Server-safe: no directive, no hooks |
+| `LiquidGlassProvider`, `RouterProvider` (`@caira/ui/next`) | Client Components |
+| `useLiquidGlass`, `useMediaQuery` | Client hooks |
 
 How this was checked: every foundation renders under `renderToString` in a Node environment with no DOM (`server.test.tsx`); the Next.js app imports `LiquidGlassProvider` and `ThemeScript` from a Server Component layout and builds, with `/` still prerendered as static. Not checked: rendering `GlassSurface`, `Material` or `Icon` inside a Server Component page of the app; no page uses them yet. `Icon` is server-safe as an import, but the Lucide glyph it renders is a Client Component (D-029).
 
@@ -420,7 +431,7 @@ How this was checked: every foundation renders under `renderToString` in a Node 
 
 1. Tier 2 detection: settled as a heuristic. D-026.
 2. Glass budget: measured on one desktop only; default 12, provisional. PROGRESS.md.
-3. `ViewTransition` versus `SharedElementTransition`: `ViewTransition` kept, with a measured cost. D-027, awaiting your answer.
+3. `ViewTransition` versus `SharedElementTransition`: neither. `ViewTransition` was kept at first (D-027) and then replaced, because it dropped the material mid-flight; one surface now grows as the real element (D-032, section 6.4). A morph between different surfaces is pending.
 4. Overlays and Activity: **not done**; no overlay exists yet.
 5. Tailwind does scan `packages/ui` without help. The package still declares `@source` so it also works when the consumer's base directory is elsewhere (the harness, Storybook).
 6. HIG color and typography values: transcribed and guarded by `tokens.test.ts`.

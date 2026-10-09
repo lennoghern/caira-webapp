@@ -3,9 +3,12 @@ import type { GlassFilterDefsProps } from "../foundations/glass/GlassFilterDefs"
 import type { StyleWithVars } from "../foundations/utils/types";
 
 /**
- * Candidate recipes for regular glass, for the "Glass recipes" comparison story.
- * None of them is the default: `current` mirrors the shipped tokens (a test
- * checks that), and the others are proposals to be chosen by eye.
+ * Recipes for regular glass, for the "Glass recipes" stories.
+ *
+ * `current` mirrors the shipped tokens (a test checks that). It was chosen by
+ * eye by the owner on 2026-10-09 from the comparison this file feeds; the others
+ * are kept as the record of what it was chosen against, and as a way to try a
+ * change before it becomes the default.
  *
  * A recipe is only numbers for knobs `glass.css` already has, so what the story
  * shows is exactly what adopting the recipe would ship. Everything is INFERRED;
@@ -97,7 +100,13 @@ const ASYMMETRIC_EDGE: Record<RecipeAppearance, string> = {
   ].join(", "),
 };
 
-const CURRENT_LIGHT: RecipeTone = {
+/** The rim that goes with the asymmetric edge: a little wider and stronger, lit from straight above. */
+const ASYMMETRIC_RIM = { displacement: 60, rim: 8, highlight: 0.9, lightAzimuth: 270 } as const;
+
+const EDGE_NOT_MODELLED =
+  "The glow and shadow reach about 10 px in from the top and bottom edges. The verdict is for the body of the surface.";
+
+const PREVIOUS_LIGHT: RecipeTone = {
   tint: [255, 255, 255],
   alphaTinted: 0.85,
   alphaClear: 0.3,
@@ -111,7 +120,7 @@ const CURRENT_LIGHT: RecipeTone = {
   sheen: 0.2,
 };
 
-const CURRENT_DARK: RecipeTone = {
+const PREVIOUS_DARK: RecipeTone = {
   tint: [36, 36, 38],
   alphaTinted: 0.85,
   alphaClear: 0.15,
@@ -125,7 +134,7 @@ const CURRENT_DARK: RecipeTone = {
   sheen: 0.05,
 };
 
-const LESS_VEIL_LIGHT: RecipeTone = {
+const DEFAULT_LIGHT: RecipeTone = {
   tint: [255, 255, 255],
   alphaTinted: 0.5,
   alphaClear: 0.06,
@@ -139,7 +148,7 @@ const LESS_VEIL_LIGHT: RecipeTone = {
   sheen: 0.12,
 };
 
-const LESS_VEIL_DARK: RecipeTone = {
+const DEFAULT_DARK: RecipeTone = {
   tint: [22, 22, 24],
   alphaTinted: 0.5,
   alphaClear: 0.06,
@@ -155,27 +164,27 @@ const LESS_VEIL_DARK: RecipeTone = {
 
 export const GLASS_RECIPES: readonly GlassRecipe[] = [
   {
-    id: "current",
-    name: "1. Current default",
-    summary: "What ships today: a strong white or dark veil over a blurred, range-compressed backdrop.",
-    light: CURRENT_LIGHT,
-    dark: CURRENT_DARK,
+    id: "previous-default",
+    name: "1. Previous default",
+    summary: "What shipped until 2026-10-09: a strong white or dark veil over a blurred, range-compressed backdrop.",
+    light: PREVIOUS_LIGHT,
+    dark: PREVIOUS_DARK,
   },
   {
-    id: "less-veil",
-    name: "2. Less veil, more saturation",
+    id: "current",
+    name: "2. Less veil, more saturation (the default)",
     summary:
-      "The lift that keeps text legible moves from the veil into brightness and contrast, and saturation is raised before it. Color from behind survives; blur is lighter.",
-    light: LESS_VEIL_LIGHT,
-    dark: LESS_VEIL_DARK,
+      "What ships now. The lift that keeps text legible moves from the veil into brightness and contrast, and saturation is raised before it. Color from behind survives; blur is lighter.",
+    light: DEFAULT_LIGHT,
+    dark: DEFAULT_DARK,
   },
   {
     id: "clear-end",
     name: "3. Near-transparent clear end",
     summary:
-      "Today's look at the default setting, but the filter steps fade out along the slider, on a curve, so the clear end is almost bare glass.",
+      "Not adopted. Recipe 1 at the default setting, but the filter steps fade out along the slider, on a curve, so the clear end is almost bare glass.",
     light: {
-      ...CURRENT_LIGHT,
+      ...PREVIOUS_LIGHT,
       alphaClear: 0.02,
       alphaMin: 0.02,
       blurClear: 1.5,
@@ -185,7 +194,7 @@ export const GLASS_RECIPES: readonly GlassRecipe[] = [
       clarityEase: 1,
     },
     dark: {
-      ...CURRENT_DARK,
+      ...PREVIOUS_DARK,
       alphaClear: 0.02,
       alphaMin: 0.02,
       blurClear: 1.5,
@@ -232,43 +241,30 @@ export const GLASS_RECIPES: readonly GlassRecipe[] = [
     id: "asymmetric-edge",
     name: "5. Asymmetric edge",
     summary:
-      "Today's fill with a different rim: a bright reflection along the top, a soft shadow along the bottom, and the refraction light moved to straight above.",
-    light: { ...CURRENT_LIGHT, edge: ASYMMETRIC_EDGE.light },
-    dark: { ...CURRENT_DARK, edge: ASYMMETRIC_EDGE.dark },
-    refraction: { displacement: 60, rim: 8, highlight: 0.9, lightAzimuth: 270 },
-    notModelled: "The glow and shadow reach about 10 px in from the top and bottom edges. The verdict is for the body of the surface.",
+      "Not adopted. The fill of recipe 1 with a different rim: a bright reflection along the top, a soft shadow along the bottom, and the refraction light moved to straight above.",
+    light: { ...PREVIOUS_LIGHT, edge: ASYMMETRIC_EDGE.light },
+    dark: { ...PREVIOUS_DARK, edge: ASYMMETRIC_EDGE.dark },
+    refraction: ASYMMETRIC_RIM,
+    notModelled: EDGE_NOT_MODELLED,
   },
-  {
-    id: "combined",
-    name: "6. Combined",
-    summary:
-      "Recipes 2, 3 and 5 together, with a moderate rim: less veil, more color, a clear end that is nearly bare, and the asymmetric edge.",
-    light: {
-      ...LESS_VEIL_LIGHT,
-      alphaClear: 0.02,
-      alphaMin: 0.02,
-      blurClear: 1.5,
-      saturateClear: 1.3,
-      contrastClear: 1,
-      brightnessClear: 1,
-      clarityEase: 1,
-      edge: ASYMMETRIC_EDGE.light,
-    },
-    dark: {
-      ...LESS_VEIL_DARK,
-      alphaClear: 0.02,
-      alphaMin: 0.02,
-      blurClear: 1.5,
-      saturateClear: 1.3,
-      contrastClear: 1,
-      brightnessClear: 1,
-      clarityEase: 1,
-      edge: ASYMMETRIC_EDGE.dark,
-    },
-    refraction: { displacement: 90, rim: 10, highlight: 0.9, lightAzimuth: 270 },
-    notModelled: "The glow and shadow reach about 10 px in from the top and bottom edges. The verdict is for the body of the surface.",
-  },
+  // Recipe 6 ("Combined": 2, 3 and 5 together) was discarded by the owner on
+  // 2026-10-09 as illegible, and is gone. The numbers keep their gap on purpose.
 ];
+
+/**
+ * A trial, not the default: the asymmetric edge of recipe 5 on the fill that
+ * ships (recipe 2). It has its own story, "Asymmetric edge on the default".
+ */
+export const EDGE_ON_DEFAULT: GlassRecipe = {
+  id: "edge-on-default",
+  name: "Asymmetric edge on the default",
+  summary:
+    "The shipped fill with the rim of recipe 5: a bright reflection along the top, a soft shadow along the bottom, and the refraction light straight above.",
+  light: { ...DEFAULT_LIGHT, edge: ASYMMETRIC_EDGE.light },
+  dark: { ...DEFAULT_DARK, edge: ASYMMETRIC_EDGE.dark },
+  refraction: ASYMMETRIC_RIM,
+  notModelled: EDGE_NOT_MODELLED,
+};
 
 /* ---- From a recipe to CSS ------------------------------------------------------------- */
 
@@ -325,13 +321,19 @@ export function resolveGlass(tone: RecipeTone, clarity: number, sizeBias = 0): R
 }
 
 /** Every way the paint stack of a small surface can sit over a flat backdrop: with and without sheen and state overlay. */
-export function recipeSurfaces(tone: RecipeTone, appearance: RecipeAppearance, clarity: number, backdrop: Rgba): Rgba[] {
+export function recipeSurfaces(
+  tone: RecipeTone,
+  appearance: RecipeAppearance,
+  clarity: number,
+  backdrop: Rgba,
+  states: "all" | "rest" = "all",
+): Rgba[] {
   const glass = resolveGlass(tone, clarity);
   const filtered = filterBrightness(filterContrast(backdrop, glass.contrast), glass.brightness);
   const base = over(rgb(tone.tint[0], tone.tint[1], tone.tint[2], glass.alpha), filtered);
   const surfaces: Rgba[] = [];
   for (const sheen of [null, rgb(255, 255, 255, tone.sheen)]) {
-    for (const overlay of [null, ...STATE_OVERLAYS[appearance]]) {
+    for (const overlay of states === "rest" ? [null] : [null, ...STATE_OVERLAYS[appearance]]) {
       let surface = sheen ? over(sheen, base) : base;
       if (overlay) surface = over(overlay, surface);
       surfaces.push(surface);
@@ -356,9 +358,15 @@ export interface RecipeVerdict {
  * Whether the label levels keep their floors on a recipe, over the two extreme
  * backdrops. Any other backdrop lands between them (see contrast.test.ts).
  */
-export function recipeVerdict(recipe: GlassRecipe, appearance: RecipeAppearance, clarity: number): RecipeVerdict {
+export function recipeVerdict(
+  recipe: GlassRecipe,
+  appearance: RecipeAppearance,
+  clarity: number,
+  /** `rest` leaves out the hovered and pressed overlays of an interactive surface. */
+  states: "all" | "rest" = "all",
+): RecipeVerdict {
   const judge = (backdrop: Rgba): BackdropVerdict => {
-    const surfaces = recipeSurfaces(recipe[appearance], appearance, clarity, backdrop);
+    const surfaces = recipeSurfaces(recipe[appearance], appearance, clarity, backdrop, states);
     const levels = Object.keys(FLOORS) as (keyof typeof FLOORS)[];
     const ratios = Object.fromEntries(
       levels.map((level) => [level, Math.min(...surfaces.map((surface) => inkContrast(LABELS[appearance][level], surface)))]),

@@ -28,19 +28,39 @@
   --glass-clarity: 0.5;
 }
 
+/*
+ * Regular glass: "less veil, more saturation", chosen by eye by the owner on
+ * 2026-10-09 from the six recipes in the "Glass recipes" story (it was recipe 2).
+ * The lift that keeps text legible comes mostly from the filter steps, which
+ * keep the color of what is behind, and little from the veil, which would
+ * whiten it. Saturation is raised first because the contrast step that follows
+ * flattens it. All INFERRED. Do not tune these by eye alone: contrast.test.ts
+ * and glass-pixels.spec.ts hold the floors (4.5:1 everywhere, and 5:1 for the
+ * secondary label on a surface at rest).
+ *
+ * The narrowest margin in the library is here (LOCAL, measured 2026-10-09): the
+ * secondary label on light glass at the clear end (clarity 1), pressed, over
+ * pure black. It is 0.01 to 0.03 above the 4.5:1 floor where the tests run
+ * (4.51 in Firefox, 4.53 in Chromium, both headless) and 0.06 above it when a
+ * GPU draws the page (4.56). Hovered, the same surface gives 4.85 to 4.86. The
+ * owner accepted that margin on 2026-10-09 with the recipe unchanged (D-035).
+ * The numbers that set it are the light --glass-contrast, --glass-brightness,
+ * --glass-alpha-clear and --glass-pressed-overlay: one 8-bit level darker on
+ * that surface fails the floor. At the default clarity the pressed case is 5.44.
+ */
 :root,
 [data-appearance] {
   --glass-tint-color: rgb(255 255 255);
-  --glass-saturate: 1.8;
-  --glass-contrast: 0.4;
-  --glass-brightness: 1.6;
+  --glass-saturate: 2.6;
+  --glass-contrast: 0.35;
+  --glass-brightness: 1.85;
   /* Tint opacity at clarity 0 and at clarity 1, and the hard limits around both. */
-  --glass-alpha-tinted: 0.85;
-  --glass-alpha-clear: 0.3;
-  --glass-alpha-min: 0.3;
+  --glass-alpha-tinted: 0.5;
+  --glass-alpha-clear: 0.06;
+  --glass-alpha-min: 0.06;
   --glass-alpha-max: 0.96;
-  --glass-blur-tinted: 40px;
-  --glass-blur-clear: 10px;
+  --glass-blur-tinted: 26px;
+  --glass-blur-clear: 6px;
   /*
    * Colored ("stained") glass, used for the one primary action. Its label is
    * light, so its states darken the surface and it carries no sheen.
@@ -59,7 +79,7 @@
   --glass-edge-highlight: rgb(255 255 255 / 0.8);
   --glass-edge-ring: rgb(255 255 255 / 0.36);
   --glass-edge-shade: rgb(0 0 0 / 0.12);
-  --glass-sheen: rgb(255 255 255 / 0.2);
+  --glass-sheen: rgb(255 255 255 / 0.12);
   --glass-hover-overlay: rgb(0 0 0 / 0.05);
   --glass-pressed-overlay: rgb(0 0 0 / 0.1);
   --glass-border: transparent;
@@ -68,13 +88,13 @@
   --glass-shadow-large: 0 4px 12px rgb(0 0 0 / 0.1), 0 16px 48px rgb(0 0 0 / 0.16);
 
   @variant theme-dark {
-    --glass-tint-color: rgb(36 36 38);
-    --glass-saturate: 1.6;
-    --glass-contrast: 0.45;
-    --glass-brightness: 0.36;
-    --glass-alpha-tinted: 0.85;
-    --glass-alpha-clear: 0.15;
-    --glass-alpha-min: 0.15;
+    --glass-tint-color: rgb(22 22 24);
+    --glass-saturate: 2.4;
+    --glass-contrast: 0.4;
+    --glass-brightness: 0.3;
+    --glass-alpha-tinted: 0.5;
+    --glass-alpha-clear: 0.06;
+    --glass-alpha-min: 0.06;
     --glass-alpha-max: 0.96;
     --glass-tinted-alpha: 0.9;
     --glass-clear-alpha: 0.08;
@@ -82,7 +102,7 @@
     --glass-edge-highlight: rgb(255 255 255 / 0.3);
     --glass-edge-ring: rgb(255 255 255 / 0.12);
     --glass-edge-shade: rgb(0 0 0 / 0.4);
-    --glass-sheen: rgb(255 255 255 / 0.05);
+    --glass-sheen: rgb(255 255 255 / 0.04);
     --glass-hover-overlay: rgb(255 255 255 / 0.06);
     --glass-pressed-overlay: rgb(255 255 255 / 0.09);
     --glass-border: transparent;
@@ -91,6 +111,10 @@
     --glass-shadow-large: 0 4px 12px rgb(0 0 0 / 0.3), 0 16px 48px rgb(0 0 0 / 0.4);
   }
 
+  /*
+   * Increased contrast keeps the opaque recipe it had before the default changed
+   * on 2026-10-09, blur included: here legibility outranks the look.
+   */
   @variant theme-contrast {
     --glass-tint-color: rgb(255 255 255);
     --glass-saturate: 1.8;
@@ -100,6 +124,8 @@
     --glass-alpha-clear: 0.78;
     --glass-alpha-min: 0.78;
     --glass-alpha-max: 0.98;
+    --glass-blur-tinted: 40px;
+    --glass-blur-clear: 10px;
     --glass-tinted-alpha: 0.96;
     --glass-clear-alpha: 0.04;
     --glass-clear-label: rgb(255 255 255);
@@ -123,6 +149,8 @@
       --glass-alpha-clear: 0.78;
       --glass-alpha-min: 0.78;
       --glass-alpha-max: 0.98;
+      --glass-blur-tinted: 40px;
+      --glass-blur-clear: 10px;
       --glass-tinted-alpha: 0.96;
       --glass-clear-alpha: 0.08;
       --glass-clear-label: rgb(255 255 255);

@@ -24,10 +24,14 @@ const CLARITIES = [0, 0.5, 1] as const;
  * Empty surfaces over pure black and pure white, in both appearances. The
  * contrast model (src/styles/contrast.test.ts) predicts the color of each one;
  * glass-pixels.spec.ts reads what the browser actually painted.
+ *
+ * Each row holds the four materials and regular glass at three clarity settings
+ * at rest, then the same glass held in its hovered and pressed states through
+ * the data attributes React Aria sets, so those states can be read without a pointer.
  */
 export const SurfacePixels: Story = {
   render: () => (
-    <div className="grid w-[720px] gap-0">
+    <div className="grid w-[1240px] gap-0">
       {(["light", "dark"] as const).flatMap((appearance) =>
         (["black", "white"] as const).map((backdrop) => (
           <LiquidGlassScope key={`${appearance}-${backdrop}`} appearance={appearance}>
@@ -50,6 +54,21 @@ export const SurfacePixels: Story = {
                   style={{ "--glass-clarity": clarity } as React.CSSProperties}
                 />
               ))}
+              {(["hovered", "pressed"] as const).flatMap((state) =>
+                CLARITIES.map((clarity) => (
+                  <GlassSurface
+                    key={`${state}-${clarity}`}
+                    size="small"
+                    shape="none"
+                    interactive
+                    data-hovered={state === "hovered" ? "true" : undefined}
+                    data-pressed={state === "pressed" ? "true" : undefined}
+                    data-sample={`${appearance}/${backdrop}/glass-${clarity}-${state}`}
+                    className="h-16 w-20"
+                    style={{ "--glass-clarity": clarity } as React.CSSProperties}
+                  />
+                )),
+              )}
             </Backdrop>
           </LiquidGlassScope>
         )),

@@ -11,6 +11,10 @@ import { recordStrips } from "./video";
 
 const FIXTURE = "tests-fixtures--expansion";
 
+// Firefox is slow to drive while other workers are recording video: one of these
+// took 40 s in a full run and 16 s alone. More time, the same assertions.
+test.describe.configure({ timeout: 90_000 });
+
 const slowDown = (page: Page, ms: number) =>
   page.evaluate((value) => document.documentElement.style.setProperty("--motion-duration-morph", `${value}ms`), ms);
 
