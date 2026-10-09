@@ -1,0 +1,116 @@
+/*
+ * Custom variants. All selectors here are INFERRED design on VENDOR mechanics
+ * (Tailwind CSS v4 `@custom-variant`). Theme state is carried by data attributes
+ * that LiquidGlassProvider writes on <html>; see ARCHITECTURE.md section 5.2.
+ *
+ * Two families:
+ *  - `theme-*` variants resolve on a scope element (the element that carries the
+ *    attribute, or :root). Token blocks use them so a nested
+ *    `<div data-appearance="dark">` re-declares every semantic variable.
+ *  - The other variants resolve on any element and are meant for utilities.
+ */
+
+/* ---- Scope-level variants, used only to declare tokens ---------------------- */
+
+@custom-variant theme-dark {
+  &:where([data-appearance="dark"]) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-appearance])) {
+      @slot;
+    }
+  }
+}
+
+@custom-variant theme-contrast {
+  &:where([data-contrast="more"], [data-contrast="more"] *) {
+    @slot;
+  }
+  @media (prefers-contrast: more) {
+    &:where(:root:not([data-contrast]), :root:not([data-contrast]) *) {
+      @slot;
+    }
+  }
+}
+
+@custom-variant theme-motion-reduced {
+  &:where([data-motion="reduced"]) {
+    @slot;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:where(:root) {
+      @slot;
+    }
+  }
+}
+
+/* ---- Element-level variants -------------------------------------------------- */
+
+/*
+ * `dark:` follows the attribute when present and the system otherwise. It handles
+ * one level of scoping. Library components do not use it: they read semantic
+ * tokens, which always follow the nearest scope.
+ */
+@custom-variant dark {
+  &:where([data-appearance="dark"], [data-appearance="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-appearance]), :root:not([data-appearance]) *):not(
+        :where([data-appearance="light"], [data-appearance="light"] *)
+      ) {
+      @slot;
+    }
+  }
+}
+
+/* Overrides Tailwind's media-only `contrast-more:` so the manual switch counts. */
+@custom-variant contrast-more {
+  &:where([data-contrast="more"], [data-contrast="more"] *) {
+    @slot;
+  }
+  @media (prefers-contrast: more) {
+    &:where(:root:not([data-contrast]), :root:not([data-contrast]) *) {
+      @slot;
+    }
+  }
+}
+
+/* Overrides Tailwind's media-only `motion-reduce:` and `motion-safe:`. */
+@custom-variant motion-reduce {
+  &:where([data-motion="reduced"], [data-motion="reduced"] *) {
+    @slot;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    @slot;
+  }
+}
+
+@custom-variant motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    &:not(:where([data-motion="reduced"], [data-motion="reduced"] *)) {
+      @slot;
+    }
+  }
+}
+
+/*
+ * `prefers-reduced-transparency` is not supported in Safari and is behind a flag
+ * in Firefox (SOURCES W4), so the attribute is the only path there.
+ */
+@custom-variant transparency-reduce {
+  &:where([data-transparency="reduced"], [data-transparency="reduced"] *) {
+    @slot;
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    @slot;
+  }
+}
+
+/* Density. `macos` is the default, so it also matches when the attribute is absent. */
+@custom-variant platform-ios (&:where([data-platform="ios"], [data-platform="ios"] *));
+@custom-variant platform-macos (&:not(:where([data-platform="ios"], [data-platform="ios"] *)));
+
+/* Chromium-only refraction tier, switched on by the provider after detection. */
+@custom-variant glass-refraction (&:where([data-glass-refraction="on"] *));

@@ -1,0 +1,21 @@
+/*
+ * @caira/ui styles: the one file an app imports.
+ *
+ *   @import "tailwindcss";
+ *   @import "@caira/ui/styles.css";
+ *
+ * Tailwind itself is imported by the app (or by the playground), never here, so
+ * the library cannot pull in a second copy.
+ */
+@import "./variants.css";
+@import "./tokens.css";
+@import "./materials.css";
+@import "./glass.css";
+@import "./motion.css";
+@import "./a11y.css";
+
+/* Short state variants for React Aria's data attributes: hovered:, pressed:, selected:, entering:, ... */
+@plugin "tailwindcss-react-aria-components";
+
+/* Scan the library's own components wherever the consuming app lives. */
+@source "../";

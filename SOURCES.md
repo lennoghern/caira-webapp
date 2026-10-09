@@ -174,3 +174,29 @@ Components (64): charts, image-views, text-views, web-views, boxes, collections,
 Supporting (17): materials, color, layout, typography, motion, accessibility, icons, sf-symbols, app-icons, dark-mode, right-to-left, designing-for-macos, designing-for-iphone-duo, focus-and-selection, keyboards, pointing-devices, modality. (focus-and-selection, keyboards, pointing-devices and modality were downloaded but not read yet.)
 
 Each page URL is `https://developer.apple.com/design/human-interface-guidelines/<slug>`.
+
+## 11. Phase 1 additions (accessed 2026-10-08)
+
+Sections 1 to 10 are the Phase 0 record and are unchanged. Rows below were added while building the foundations.
+
+| ID | Source | URL | Used for | Label |
+| --- | --- | --- | --- | --- |
+| A36 | HIG Color, "Specifications" | https://developer.apple.com/design/human-interface-guidelines/color | **Transcribed**: the 12 system colors and the 6 iOS, iPadOS system grays, each in four columns (default light, default dark, increased contrast light, increased contrast dark). The values are in the alt text of the swatch images. In `tokens.css`, guarded by `tokens.test.ts`. The page publishes no values for labels, fills, separators or backgrounds | VERIFIED |
+| A37 | HIG Typography, "Specifications" | https://developer.apple.com/design/human-interface-guidelines/typography | **Transcribed**: "macOS built-in text styles" and "iOS, iPadOS Dynamic Type sizes", tab "Large (default)": size, line height or leading, weight. Read but not used: emphasized weights; the tracking tables (the page says to adjust tracking "in interface mockups" and that "in a running app, the system font dynamically adjusts tracking"). Also read: default and minimum sizes per platform | VERIFIED |
+| A38 | HIG Materials, read in full | https://developer.apple.com/design/human-interface-guidelines/materials | Confirms the Phase 0 summary (A4): glass for controls and navigation only; regular and clear; "a dark dimming layer of 35% opacity"; four standard materials; label, fill and separator vibrancy levels by name. No numeric value besides the 35% | VERIFIED |
+| A39 | HIG Motion, read in full | https://developer.apple.com/design/human-interface-guidelines/motion | Principles only: purposeful, brief, optional, "let people cancel motion". No duration or easing curve is published, so every motion token is INFERRED. Used in D-027 | VERIFIED |
+| A40 | HIG Layout, scanned for numbers | https://developer.apple.com/design/human-interface-guidelines/layout | No spacing scale and no corner radius. The only figures are tvOS safe-area margins and a visionOS control spacing, neither used | VERIFIED (nothing used) |
+| R1 | React blog, "React v19" | https://react.dev/blog/2024/12/05/react-19 | "Starting in React 19, you can now access `ref` as a prop for function components"; "In future versions we will deprecate and remove `forwardRef`". Read through a summarizing fetch, so the quotes are second-hand; the behavior itself is covered by unit tests | VENDOR |
+| L9 | lucide-react 1.53.0, installed files | `packages/ui/node_modules/lucide-react/dist/esm/Icon.mjs`, `context.mjs` | Both start with `"use client"`; the base icon reads a context. `sideEffects: false`. D-029 | LOCAL |
+| L10 | react-aria-components 1.22.0, installed files | `dist/private/SharedElementTransition.mjs`, `dist/types/src/SharedElementTransition.d.ts`; react-aria 3.53.0 `dist/types/src/utils/openLink.d.ts` | How `SharedElementTransition` works (it snapshots the rectangle and the transitioning properties when an element unmounts, and animates the next element with the same name from them); `RouterProvider` takes `navigate` and optional `useHref`. D-027, the Next.js adapter | LOCAL |
+| L11 | React 19.3.0, installed | `node_modules/react` | `ViewTransition`, `addTransitionType` and `Activity` are exported by the installed package | LOCAL |
+| L12 | Next.js 16.4.0 bundled docs, read again in Phase 1 | `node_modules/next/dist/docs/01-app/` (preventing flash before hydration, preserving UI state, view transitions, Vitest, CSS, fonts, `transpilePackages`, `optimizePackageImports`) and the `@tailwindcss/turbopack` README | Inline theme script and `suppressHydrationWarning`; the layout-effect re-apply for Strict Mode; view transitions need a transition; hit-testing skips named participants during a view transition; workspace packages are transpiled automatically | LOCAL |
+| L13 | Measurements on this machine | `packages/ui/tests/browser/*.spec.ts`, results in PROGRESS.md | Painted pixels against the contrast model in Chromium and Firefox; what Firefox does with an SVG filter in `backdrop-filter`; frame times; view transition behavior; that Playwright's Firefox screenshots omit `backdrop-filter` | LOCAL |
+| L14 | oxc-resolver 11.21.2, installed files and the error it raised | `node_modules/.pnpm/oxc-resolver@11.21.2/.../index.js` | Storybook depends on it; its Windows native module is unsigned and is blocked by Smart App Control here; the package lists `@oxc-resolver/binding-wasm32-wasi` as an optional fallback loaded when `NAPI_RS_FORCE_WASI` is set or the native load fails. D-024 | LOCAL |
+
+Additions to section 8 (not verified):
+
+- **Labels, fills, separators, backgrounds.** The INFERRED values in `tokens.css` began from the UIKit dynamic colors as I remember them and were then changed where the contrast tests required. No Apple page was read for them, and they are not Apple's values.
+- **WebKit behavior**: nothing in Phase 1 ran in WebKit.
+- **Why Playwright's Firefox screenshots omit `backdrop-filter`**: observed, cause not looked up.
+- **The WAI-ARIA 1.2 specification** (W3) is still unread.

@@ -1,16 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { LiquidGlassProvider, ThemeScript } from "@caira/ui/foundations";
+import { RouterProvider } from "@caira/ui/next";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -19,11 +10,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    // suppressHydrationWarning: ThemeScript sets theme attributes on <html> before React hydrates.
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+      <head>
+        <ThemeScript />
+      </head>
+      <body className="min-h-full flex flex-col">
+        <RouterProvider>
+          <LiquidGlassProvider>{children}</LiquidGlassProvider>
+        </RouterProvider>
+      </body>
     </html>
   );
 }

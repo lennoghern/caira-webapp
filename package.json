@@ -6,9 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit && pnpm --filter @caira/ui typecheck",
+    "test": "pnpm --filter @caira/ui test",
+    "storybook": "pnpm --filter @caira/ui storybook",
+    "test:browser": "pnpm --filter @caira/ui test:browser",
+    "stories": "pnpm --filter @caira/ui stories"
   },
   "dependencies": {
+    "@caira/ui": "workspace:*",
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"

@@ -1,0 +1,129 @@
+/*
+ * Standard materials for the content layer: ultra-thin, thin, regular, thick.
+ *
+ * VERIFIED (HIG Materials): the four names; "thicker materials, which are more
+ * opaque, can provide better contrast"; "thinner materials, which are more
+ * translucent, can help people retain their context".
+ * INFERRED: every number below. Apple publishes none.
+ *
+ * Recipe: the backdrop is blurred, then range-compressed with contrast() and
+ * brightness() so a black or a white backdrop both land in a band the label
+ * colors can sit on, then a tint is composited over it. saturate() runs first,
+ * so the later per-channel steps keep every channel inside that band whatever
+ * the backdrop is. The floor this buys is asserted in contrast.test.ts.
+ */
+
+:root,
+[data-appearance] {
+  --material-tint-color: rgb(255 255 255);
+  --material-saturate: 1.8;
+  --material-contrast: 0.4;
+  --material-brightness: 1.6;
+  --material-ultrathin-alpha: 0.3;
+  --material-thin-alpha: 0.45;
+  --material-regular-alpha: 0.6;
+  --material-thick-alpha: 0.8;
+  --material-ultrathin-blur: 16px;
+  --material-thin-blur: 24px;
+  --material-regular-blur: 32px;
+  --material-thick-blur: 40px;
+  --material-border: transparent;
+
+  @variant theme-dark {
+    --material-tint-color: rgb(28 28 30);
+    --material-saturate: 1.6;
+    --material-contrast: 0.45;
+    --material-brightness: 0.5;
+    --material-ultrathin-alpha: 0.25;
+    --material-thin-alpha: 0.4;
+    --material-regular-alpha: 0.55;
+    --material-thick-alpha: 0.75;
+  }
+
+  @variant theme-contrast {
+    --material-tint-color: rgb(255 255 255);
+    --material-saturate: 1.8;
+    --material-contrast: 0.4;
+    --material-brightness: 1.6;
+    --material-ultrathin-alpha: 0.72;
+    --material-thin-alpha: 0.78;
+    --material-regular-alpha: 0.84;
+    --material-thick-alpha: 0.92;
+    --material-border: var(--separator-opaque);
+
+    @variant theme-dark {
+      --material-tint-color: rgb(20 20 22);
+      --material-saturate: 1.6;
+      --material-contrast: 0.45;
+      --material-brightness: 0.5;
+      --material-ultrathin-alpha: 0.72;
+      --material-thin-alpha: 0.78;
+      --material-regular-alpha: 0.84;
+      --material-thick-alpha: 0.92;
+      --material-border: var(--separator-opaque);
+    }
+  }
+}
+
+/*
+ * Shared body. `--material-alpha` and `--material-blur` are set by the four
+ * thickness utilities below.
+ */
+@utility material {
+  color: var(--label);
+  background-color: color-mix(
+    in srgb,
+    var(--material-tint-color) calc(var(--material-alpha) * 100%),
+    transparent
+  );
+  -webkit-backdrop-filter: blur(var(--material-blur)) saturate(var(--material-saturate))
+    contrast(var(--material-contrast)) brightness(var(--material-brightness));
+  backdrop-filter: blur(var(--material-blur)) saturate(var(--material-saturate))
+    contrast(var(--material-contrast)) brightness(var(--material-brightness));
+  /* Invisible until Increase Contrast or forced colors need a real edge. No layout cost. */
+  outline: 1px solid var(--material-border);
+  outline-offset: -1px;
+
+  /* Tier 0: no backdrop-filter support. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    background-color: var(--surface-solid);
+    outline-color: var(--separator);
+  }
+
+  /* Tier 0: reduced transparency. */
+  @variant transparency-reduce {
+    background-color: var(--surface-solid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    outline-color: var(--separator);
+  }
+
+  /* Tier 0: forced colors. System colors only, and a real outline for the edge. */
+  @variant forced-colors {
+    background-color: Canvas;
+    color: CanvasText;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    outline-color: CanvasText;
+  }
+}
+
+@utility material-ultrathin {
+  --material-alpha: var(--material-ultrathin-alpha);
+  --material-blur: var(--material-ultrathin-blur);
+}
+
+@utility material-thin {
+  --material-alpha: var(--material-thin-alpha);
+  --material-blur: var(--material-thin-blur);
+}
+
+@utility material-regular {
+  --material-alpha: var(--material-regular-alpha);
+  --material-blur: var(--material-regular-blur);
+}
+
+@utility material-thick {
+  --material-alpha: var(--material-thick-alpha);
+  --material-blur: var(--material-thick-blur);
+}

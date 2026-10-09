@@ -1,0 +1,49 @@
+/*
+ * Accessibility style layers.
+ *
+ * Each preference has one switch and one place where it is honored:
+ *
+ *   preference             attribute on <html>           media query                       where it is applied
+ *   reduced motion         data-motion="reduced"         prefers-reduced-motion: reduce    motion.css (tokens, view transitions), `motion-reduce:`
+ *   increased contrast     data-contrast="more"          prefers-contrast: more            tokens.css, materials.css, glass.css (`theme-contrast`), `contrast-more:`
+ *   reduced transparency   data-transparency="reduced"   prefers-reduced-transparency      materials.css, glass.css (`transparency-reduce:`)
+ *   forced colors          none (system only)            forced-colors: active             materials.css, glass.css, below (`forced-colors:`)
+ *
+ * The attribute is a manual override written by LiquidGlassProvider. It matters
+ * most for transparency: Safari has no `prefers-reduced-transparency`
+ * (SOURCES W4), so on Apple devices the attribute is the only way in.
+ */
+
+/*
+ * Focus ring for controls that draw their own. 2 px, offset outward so a glass
+ * edge never clips it. STANDARD: WCAG 2.2 2.4.7 and 1.4.11 (3:1 against
+ * adjacent colors, asserted for the default accent in contrast.test.ts).
+ */
+@utility focus-ring {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+
+  &:where(:focus-visible):not(:where([data-rac])),
+  &:where([data-focus-visible]) {
+    outline-color: var(--focus-ring);
+  }
+
+  @variant contrast-more {
+    outline-width: 3px;
+  }
+
+  @variant forced-colors {
+    &:where(:focus-visible, [data-focus-visible]) {
+      outline-color: Highlight;
+    }
+  }
+}
+
+/*
+ * Minimum pointer target. STANDARD: WCAG 2.2 2.5.8 (24 by 24 CSS px).
+ * VERIFIED sizes behind `--control-height`: HIG Accessibility.
+ */
+@utility target-min {
+  min-block-size: var(--control-height);
+  min-inline-size: var(--control-height);
+}

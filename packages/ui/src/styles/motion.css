@@ -1,0 +1,70 @@
+/*
+ * Motion tokens.
+ *
+ * VERIFIED (HIG Motion): motion is purposeful, brief, cancellable and optional.
+ * The page gives no duration or curve, so every number here is INFERRED.
+ */
+
+:root,
+[data-motion] {
+  --motion-duration-instant: 80ms;
+  --motion-duration-fast: 150ms;
+  --motion-duration-base: 250ms;
+  --motion-duration-slow: 400ms;
+  /* A glass surface changing size and radius (glass.css, `glass-expandable`). */
+  --motion-duration-morph: 350ms;
+  /* Opacity-only changes. Kept under reduced motion: a fade moves nothing. */
+  --motion-duration-fade: 200ms;
+
+  /*
+   * Reduced motion: anything that moves, scales or morphs ends at once. The value
+   * is 0.01ms and not 0 so `transitionend` and `animationend` still fire.
+   */
+  @variant theme-motion-reduced {
+    --motion-duration-instant: 0.01ms;
+    --motion-duration-fast: 0.01ms;
+    --motion-duration-base: 0.01ms;
+    --motion-duration-slow: 0.01ms;
+    --motion-duration-morph: 0.01ms;
+  }
+}
+
+@utility duration-instant {
+  transition-duration: var(--motion-duration-instant);
+}
+@utility duration-fast {
+  transition-duration: var(--motion-duration-fast);
+}
+@utility duration-base {
+  transition-duration: var(--motion-duration-base);
+}
+@utility duration-slow {
+  transition-duration: var(--motion-duration-slow);
+}
+@utility duration-morph {
+  transition-duration: var(--motion-duration-morph);
+}
+@utility duration-fade {
+  transition-duration: var(--motion-duration-fade);
+}
+
+/* ---- View transitions --------------------------------------------------------- */
+
+/*
+ * The library itself starts no view transition: glass animates as the real
+ * element (glass.css, `glass-expandable`), because a snapshot of a glass surface
+ * loses its backdrop filter (DECISIONS.md D-032). An app may still use them for
+ * route changes, so reduced motion is honored for every view transition here:
+ * positions and sizes snap, and the cross-fade between snapshots stays.
+ */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
+:root[data-motion="reduced"]::view-transition-group(*) {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+}

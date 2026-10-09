@@ -1,6 +1,8 @@
 # ARCHITECTURE
 
-How the component library is built. Phase 0 plan: nothing here is implemented yet, and nothing was installed.
+How the component library is built.
+
+Sections 1 to 12 are the Phase 0 plan, kept as written. **Section 13 says what Phase 1 actually built and where it departs from the plan; where the two disagree, section 13 and DECISIONS.md D-023 to D-031 win.**
 
 Evidence labels (VERIFIED, STANDARD, VENDOR, LOCAL, REPORTED, INFERRED) are defined in SOURCES.md section 1. Source IDs such as A20 or W4 point to rows in that file. Decisions are numbered in DECISIONS.md.
 
@@ -330,3 +332,106 @@ New dependencies Phase 1 would install (nothing is installed yet): `react-aria-c
 6. Transcribing HIG color and typography values into tokens, each marked VERIFIED, and marking the rest INFERRED.
 7. The numeric glass recipe (blur, saturation, tint, edge, shadow, clarity curve) and the window corner radius: all INFERRED, tuned visually, with your review of the playground.
 8. Reading the pages fetched but not yet read: HIG focus-and-selection, keyboards, pointing-devices, modality, typography tables; WWDC25 sessions 219 and 356; WWDC26 sessions 250 and 292.
+
+Outcome of each item is in section 13.5.
+
+## 13. Phase 1 as built (2026-10-08)
+
+### 13.1 Installed versions (VENDOR, from `pnpm ls`)
+
+All in `packages/ui/package.json`. Ranges are carets unless marked exact.
+
+| Package | Version | Kind |
+| --- | --- | --- |
+| `react-aria-components` | **1.22.0, exact** | dependency |
+| `tailwindcss-react-aria-components` | 2.2.0 | dependency |
+| `tailwind-variants` | 3.3.1 | dependency |
+| `tailwind-merge` | 3.7.0 | dependency |
+| `lucide-react` | 1.53.0 | dependency |
+| `vitest` | 5.0.3 | dev |
+| `@vitejs/plugin-react` | 6.1.2 | dev |
+| `jsdom` | 30.1.2 | dev |
+| `@testing-library/react` | 16.3.3 | dev |
+| `@testing-library/dom` | 10.4.2 | dev |
+| `@testing-library/user-event` | 14.6.7 | dev |
+| `@testing-library/jest-dom` | 7.0.1 | dev |
+| `jest-axe` | 11.0.0 | dev |
+| `@tailwindcss/vite` | 4.3.3, exact (must equal `tailwindcss`) | dev |
+| `storybook` | 10.6.1 | dev |
+| `@storybook/react-vite` | 10.6.1 | dev |
+| `@storybook/addon-a11y` | 10.6.1 | dev |
+| `@playwright/test` | 1.64.0 | dev |
+| `vite-tsconfig-paths` | 6.1.1, **installed and then removed** | — |
+
+Not declared, present because the above require them: `vite` 8.3.4 (peer), `axe-core` 4.12.1 (inside `jest-axe`) and 4.14.0 (inside the Storybook addon), `playwright` 1.64.0. Already in the repository and now also declared in the package at the same versions: `react` and `react-dom` 19.3.0, `next` 16.4.0, `tailwindcss` 4.3.3, `typescript` 5.9.3, `@types/react` and `@types/react-dom` 19.3.0. Details and the two judgment calls: D-031.
+
+### 13.2 What exists
+
+```
+packages/ui/
+  package.json            exports: foundations, the eight categories (empty), next, styles.css
+  tsconfig.json           strict, noUncheckedIndexedAccess, verbatimModuleSyntax
+  vitest.config.mts       jsdom unit tests
+  playwright.config.ts    real-browser tests; PLAYWRIGHT_ENGINES selects engines
+  .storybook/             main.ts, preview.tsx (toolbar globals), preview.css
+  src/styles/             index.css, variants.css (new), tokens.css, materials.css, glass.css, motion.css, a11y.css
+  src/foundations/
+    theme/                LiquidGlassProvider, LiquidGlassScope (new), ThemeScript, useLiquidGlass, useMediaQuery, store
+    glass/                GlassSurface, GlassGroup + useGlassMorph, GlassFilterDefs, glassSurface(), concentric(), refraction detection
+    materials/            Material, material()
+    icon/                 Icon, createIcon(), registry
+    utils/                cn(), tv(), tailwind-merge configuration
+  src/next/               RouterProvider
+  src/test/               setup, axe helper, color math, CSS token reader, story kit, fixtures
+  tests/browser/          Playwright specs, and harness/ (the stories without the Storybook application)
+```
+
+Commands, from the repository root: `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm test:browser`, `pnpm stories`, `pnpm storybook` (blocked on this machine, D-024), `pnpm build`.
+
+Existing files changed, all from the list in section 11: `pnpm-workspace.yaml`, `package.json`, `app/globals.css`, `app/layout.tsx`, `tsconfig.json`, `eslint.config.mjs`, `.gitignore`. `next.config.ts` was not touched.
+
+### 13.3 Departures from the plan
+
+| Plan | As built | Why | Decision |
+| --- | --- | --- | --- |
+| Playground is Storybook | Storybook is configured but cannot start here; a portable-stories harness renders the same stories | Smart App Control blocks a native module Storybook needs | D-024 |
+| Browser axe "over Storybook stories" | Over the same stories through the harness; axe's contrast rule skips glass and materials | axe ignores `backdrop-filter` | D-025 |
+| Contrast: "a tint floor" composited over black and white | The floor comes from range compression in the backdrop filter plus a tint, verified by a model and by reading painted pixels | A tint alone would have to be nearly opaque | D-025 |
+| Nested glass "detects its parent through context" | A CSS descendant rule | Keeps `GlassSurface` server-safe | D-026 |
+| Tier 2 detection open | Chromium by `userAgentData`, value parses, and not software-rendered | Measured: elsewhere the SVG filter removes the whole backdrop filter | D-026 |
+| Provider state from a lazy `useState` initializer | An external store with a server snapshot | Avoids hydration mismatches | D-028 |
+| `--accent` is the knob | `--accent-custom` is the knob; `--accent` is the token | Scopes re-declare tokens | D-028 |
+| Not planned | `LiquidGlassScope` for subtree theming | Needed for the theme matrix, and for dark or dense islands in an app | D-028 |
+| "Apps can replace the registry" | `createIcon(registry)`; no runtime global swap | A Server Component cannot read context | D-029 |
+| `vite-tsconfig-paths` in the Vitest setup | Removed | Vite 8 resolves tsconfig paths itself; the package has no aliases | D-031 |
+| `GlassSurface` props `variant tint shape interactive dim` | Plus `size`, `bounce`, `appearance`, `glassId`, `as` | Larger surfaces are more opaque (HIG Color); macOS 27 bounce; manual stand-in for backdrop adaptivity | D-025, D-027 |
+
+### 13.4 Server and client, as built
+
+| Export | Kind |
+| --- | --- |
+| `GlassSurface`, `GlassFilterDefs`, `Material`, `Icon`, `ThemeScript`, `LiquidGlassScope`, `cn`, `tv`, `glassSurface`, `material`, `concentric`, `concentricContainerStyle`, `createIcon` | Server-safe: no directive, no hooks |
+| `LiquidGlassProvider`, `GlassGroup`, `RouterProvider` (`@caira/ui/next`) | Client Components |
+| `useLiquidGlass`, `useGlassMorph`, `useMediaQuery` | Client hooks |
+
+How this was checked: every foundation renders under `renderToString` in a Node environment with no DOM (`server.test.tsx`); the Next.js app imports `LiquidGlassProvider` and `ThemeScript` from a Server Component layout and builds, with `/` still prerendered as static. Not checked: rendering `GlassSurface`, `Material` or `Icon` inside a Server Component page of the app; no page uses them yet. `Icon` is server-safe as an import, but the Lucide glyph it renders is a Client Component (D-029).
+
+### 13.5 Outcome of the open items in section 12
+
+1. Tier 2 detection: settled as a heuristic. D-026.
+2. Glass budget: measured on one desktop only; default 12, provisional. PROGRESS.md.
+3. `ViewTransition` versus `SharedElementTransition`: `ViewTransition` kept, with a measured cost. D-027, awaiting your answer.
+4. Overlays and Activity: **not done**; no overlay exists yet.
+5. Tailwind does scan `packages/ui` without help. The package still declares `@source` so it also works when the consumer's base directory is elsewhere (the harness, Storybook).
+6. HIG color and typography values: transcribed and guarded by `tokens.test.ts`.
+7. Glass recipe: set by the contrast tests; **not yet reviewed by eye**. D-025.
+8. Reading: Color, Typography, Materials and Motion read in full. Still unread: focus-and-selection, keyboards, pointing-devices, modality, WWDC25 219 and 356, WWDC26 250 and 292.
+
+### 13.6 Limits of the Phase 1 evidence
+
+- **WebKit and Safari: nothing verified.** Playwright's WebKit build cannot start on this machine.
+- **No screen reader was run.**
+- Firefox was Playwright's build, not a release build.
+- The contrast guarantee covers materials and regular glass. It does not cover `clear` glass or a custom tint or accent.
+- Performance was measured on one desktop with small surfaces.
+- The visual design has not been reviewed by a person.

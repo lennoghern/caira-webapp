@@ -1,0 +1,14 @@
+/* The playground plays the app's part: it imports Tailwind, then the library. */
+@import "tailwindcss";
+@import "../src/styles/index.css";
+
+@source "./";
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--label);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}

@@ -1,0 +1,482 @@
+/*
+ * Liquid Glass for the web: a controls-and-navigation layer material.
+ *
+ * VERIFIED rules this file implements (SOURCES A4, A5, A10, A12, A20, A21):
+ *  - two variants, regular and clear; clear only over rich media, with a dark
+ *    dimming layer of 35% when the content behind is bright;
+ *  - tint, shape and an interactive response are configurable;
+ *  - larger surfaces are more opaque than small ones;
+ *  - glass is never layered on glass;
+ *  - glass follows Reduce Transparency and Increase Contrast;
+ *  - macOS 27: stronger diffusion, a darkened edge, brighter specular highlights,
+ *    and a user setting from ultra clear to fully tinted.
+ * INFERRED: every number. Apple publishes none (SOURCES section 8).
+ *
+ * Rendering tiers (ARCHITECTURE.md 6.3):
+ *   0 solid       no blur: reduced transparency, forced colors, no backdrop-filter
+ *   1 frosted     blur + range compression + tint + CSS edge lights. The baseline.
+ *   2 refractive  tier 1 plus an SVG displacement filter. Chromium only; the
+ *                 provider turns it on with `data-glass-refraction="on"`.
+ */
+
+/*
+ * 0 = fully tinted, 1 = ultra clear. Declared on :root only, so an appearance
+ * scope inherits the person's setting. The provider writes it on <html>.
+ * VERIFIED: the range (WWDC26 keynote). INFERRED: the scale and the default.
+ */
+:root {
+  --glass-clarity: 0.5;
+}
+
+:root,
+[data-appearance] {
+  --glass-tint-color: rgb(255 255 255);
+  --glass-saturate: 1.8;
+  --glass-contrast: 0.4;
+  --glass-brightness: 1.6;
+  /* Tint opacity at clarity 0 and at clarity 1, and the hard limits around both. */
+  --glass-alpha-tinted: 0.85;
+  --glass-alpha-clear: 0.3;
+  --glass-alpha-min: 0.3;
+  --glass-alpha-max: 0.96;
+  --glass-blur-tinted: 40px;
+  --glass-blur-clear: 10px;
+  /*
+   * Colored ("stained") glass, used for the one primary action. Its label is
+   * light, so its states darken the surface and it carries no sheen.
+   */
+  --glass-tinted-alpha: 0.9;
+  --glass-tinted-sheen: transparent;
+  --glass-tinted-hover-overlay: rgb(0 0 0 / 0.08);
+  --glass-tinted-pressed-overlay: rgb(0 0 0 / 0.16);
+  /* The clear variant. No range compression: it carries no contrast guarantee. */
+  --glass-clear-alpha: 0.04;
+  --glass-clear-blur: 3px;
+  --glass-clear-saturate: 1.4;
+  --glass-clear-label: rgb(255 255 255 / 0.96);
+  /* VERIFIED: HIG Materials, "a dark dimming layer of 35% opacity". */
+  --glass-dim-alpha: 0.35;
+  --glass-edge-highlight: rgb(255 255 255 / 0.8);
+  --glass-edge-ring: rgb(255 255 255 / 0.36);
+  --glass-edge-shade: rgb(0 0 0 / 0.12);
+  --glass-sheen: rgb(255 255 255 / 0.2);
+  --glass-hover-overlay: rgb(0 0 0 / 0.05);
+  --glass-pressed-overlay: rgb(0 0 0 / 0.1);
+  --glass-border: transparent;
+  --glass-shadow-small: 0 1px 2px rgb(0 0 0 / 0.1), 0 2px 8px rgb(0 0 0 / 0.08);
+  --glass-shadow-medium: 0 2px 6px rgb(0 0 0 / 0.1), 0 8px 24px rgb(0 0 0 / 0.12);
+  --glass-shadow-large: 0 4px 12px rgb(0 0 0 / 0.1), 0 16px 48px rgb(0 0 0 / 0.16);
+
+  @variant theme-dark {
+    --glass-tint-color: rgb(36 36 38);
+    --glass-saturate: 1.6;
+    --glass-contrast: 0.45;
+    --glass-brightness: 0.36;
+    --glass-alpha-tinted: 0.85;
+    --glass-alpha-clear: 0.15;
+    --glass-alpha-min: 0.15;
+    --glass-alpha-max: 0.96;
+    --glass-tinted-alpha: 0.9;
+    --glass-clear-alpha: 0.08;
+    --glass-clear-label: rgb(255 255 255 / 0.96);
+    --glass-edge-highlight: rgb(255 255 255 / 0.3);
+    --glass-edge-ring: rgb(255 255 255 / 0.12);
+    --glass-edge-shade: rgb(0 0 0 / 0.4);
+    --glass-sheen: rgb(255 255 255 / 0.05);
+    --glass-hover-overlay: rgb(255 255 255 / 0.06);
+    --glass-pressed-overlay: rgb(255 255 255 / 0.09);
+    --glass-border: transparent;
+    --glass-shadow-small: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.24);
+    --glass-shadow-medium: 0 2px 6px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.32);
+    --glass-shadow-large: 0 4px 12px rgb(0 0 0 / 0.3), 0 16px 48px rgb(0 0 0 / 0.4);
+  }
+
+  @variant theme-contrast {
+    --glass-tint-color: rgb(255 255 255);
+    --glass-saturate: 1.8;
+    --glass-contrast: 0.4;
+    --glass-brightness: 1.6;
+    --glass-alpha-tinted: 0.94;
+    --glass-alpha-clear: 0.78;
+    --glass-alpha-min: 0.78;
+    --glass-alpha-max: 0.98;
+    --glass-tinted-alpha: 0.96;
+    --glass-clear-alpha: 0.04;
+    --glass-clear-label: rgb(255 255 255);
+    --glass-edge-highlight: transparent;
+    --glass-edge-ring: transparent;
+    --glass-edge-shade: transparent;
+    --glass-sheen: transparent;
+    --glass-hover-overlay: rgb(0 0 0 / 0.08);
+    --glass-pressed-overlay: rgb(0 0 0 / 0.14);
+    --glass-border: var(--separator-opaque);
+    --glass-shadow-small: 0 1px 2px rgb(0 0 0 / 0.1), 0 2px 8px rgb(0 0 0 / 0.08);
+    --glass-shadow-medium: 0 2px 6px rgb(0 0 0 / 0.1), 0 8px 24px rgb(0 0 0 / 0.12);
+    --glass-shadow-large: 0 4px 12px rgb(0 0 0 / 0.1), 0 16px 48px rgb(0 0 0 / 0.16);
+
+    @variant theme-dark {
+      --glass-tint-color: rgb(28 28 30);
+      --glass-saturate: 1.6;
+      --glass-contrast: 0.45;
+      --glass-brightness: 0.5;
+      --glass-alpha-tinted: 0.94;
+      --glass-alpha-clear: 0.78;
+      --glass-alpha-min: 0.78;
+      --glass-alpha-max: 0.98;
+      --glass-tinted-alpha: 0.96;
+      --glass-clear-alpha: 0.08;
+      --glass-clear-label: rgb(255 255 255);
+      --glass-edge-highlight: transparent;
+      --glass-edge-ring: transparent;
+      --glass-edge-shade: transparent;
+      --glass-sheen: transparent;
+      --glass-hover-overlay: rgb(255 255 255 / 0.1);
+      --glass-pressed-overlay: rgb(255 255 255 / 0.16);
+      --glass-border: var(--separator-opaque);
+      --glass-shadow-small: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px rgb(0 0 0 / 0.24);
+      --glass-shadow-medium: 0 2px 6px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.32);
+      --glass-shadow-large: 0 4px 12px rgb(0 0 0 / 0.3), 0 16px 48px rgb(0 0 0 / 0.4);
+    }
+  }
+}
+
+/* ---- Variants: each one only declares inputs for `glass-surface` ------------ */
+
+@utility glass-regular {
+  /*
+   * Position on the clarity slider, 0 to 1. `--glass-clarity-ease` (0 by default,
+   * so linear) bends it toward a quadratic curve, which keeps the middle of the
+   * slider nearer the tinted end.
+   */
+  --glass-c: clamp(0, var(--glass-clarity), 1);
+  --glass-t: calc(
+    var(--glass-c) + (var(--glass-c) * var(--glass-c) - var(--glass-c)) * var(--glass-clarity-ease, 0)
+  );
+  --glass-fill-alpha: var(
+    --glass-alpha-override,
+    clamp(
+      var(--glass-alpha-min),
+      calc(
+        var(--glass-alpha-tinted) + (var(--glass-alpha-clear) - var(--glass-alpha-tinted)) * var(--glass-t) +
+          var(--glass-size-bias, 0)
+      ),
+      var(--glass-alpha-max)
+    )
+  );
+  --glass-backdrop-pre: blur(
+    calc(var(--glass-blur-tinted) + (var(--glass-blur-clear) - var(--glass-blur-tinted)) * var(--glass-t))
+  );
+  /*
+   * Each filter step may have its own value at the clear end
+   * (`--glass-saturate-clear`, `--glass-contrast-clear`, `--glass-brightness-clear`).
+   * None is set by default, so the steps are constant across the slider.
+   */
+  --glass-backdrop-post: saturate(
+      calc(
+        var(--glass-saturate) + (var(--glass-saturate-clear, var(--glass-saturate)) - var(--glass-saturate)) *
+          var(--glass-t)
+      )
+    )
+    contrast(
+      calc(
+        var(--glass-contrast) + (var(--glass-contrast-clear, var(--glass-contrast)) - var(--glass-contrast)) *
+          var(--glass-t)
+      )
+    )
+    brightness(
+      calc(
+        var(--glass-brightness) +
+          (var(--glass-brightness-clear, var(--glass-brightness)) - var(--glass-brightness)) * var(--glass-t)
+      )
+    );
+  --glass-ink: var(--glass-ink-override, var(--label));
+}
+
+@utility glass-clear {
+  --glass-fill-alpha: var(--glass-alpha-override, var(--glass-clear-alpha));
+  --glass-backdrop-pre: blur(var(--glass-clear-blur));
+  --glass-backdrop-post: saturate(var(--glass-clear-saturate));
+  --glass-ink: var(--glass-ink-override, var(--glass-clear-label));
+
+  /* Increase Contrast turns clear glass into regular glass: legibility wins. */
+  @variant contrast-more {
+    --glass-fill-alpha: var(--glass-alpha-override, var(--glass-alpha-min));
+    --glass-backdrop-pre: blur(var(--glass-blur-tinted));
+    --glass-backdrop-post: saturate(var(--glass-saturate)) contrast(var(--glass-contrast))
+      brightness(var(--glass-brightness));
+    --glass-ink: var(--glass-ink-override, var(--label));
+  }
+}
+
+/* The dimming layer Apple pairs with clear glass over bright media. */
+@utility glass-dim {
+  --glass-dim: var(--glass-dim-alpha);
+}
+
+/* Colored glass. The color itself comes from `--glass-tint` on the element. */
+@utility glass-tinted {
+  --glass-alpha-override: var(--glass-tinted-alpha);
+  --glass-ink-override: var(--glass-on-tint, var(--on-accent));
+  --glass-sheen: var(--glass-tinted-sheen);
+  --glass-hover-overlay: var(--glass-tinted-hover-overlay);
+  --glass-pressed-overlay: var(--glass-tinted-pressed-overlay);
+}
+
+/* ---- Sizes: larger surfaces are more opaque (HIG Color) ---------------------- */
+
+@utility glass-small {
+  --glass-size-bias: 0;
+  --glass-shadow: var(--glass-shadow-small);
+  --glass-radius: var(--radius-control);
+}
+
+@utility glass-medium {
+  --glass-size-bias: 0.06;
+  --glass-shadow: var(--glass-shadow-medium);
+  --glass-radius: var(--radius-popover);
+}
+
+@utility glass-large {
+  --glass-size-bias: 0.16;
+  --glass-shadow: var(--glass-shadow-large);
+  --glass-radius: var(--radius-panel);
+}
+
+/* ---- Shapes ------------------------------------------------------------------ */
+
+@utility glass-shape-rounded {
+  border-radius: var(--glass-radius, var(--radius-popover));
+  --concentric-radius: var(--glass-radius, var(--radius-popover));
+}
+
+@utility glass-shape-capsule {
+  border-radius: 9999px;
+  --concentric-radius: 9999px;
+}
+
+@utility glass-shape-circle {
+  border-radius: 9999px;
+  aspect-ratio: 1;
+  --concentric-radius: 9999px;
+}
+
+/* ---- Expanding and collapsing ------------------------------------------------ */
+
+/*
+ * A surface that grows and shrinks. The element itself changes size and radius,
+ * so its backdrop filter and tint are painted on every frame. (A view transition
+ * animates a snapshot instead, and the snapshot has no backdrop filter: measured,
+ * DECISIONS.md D-032.)
+ *
+ * The collapsed radius is a real length, not 9999px, so the corner animates
+ * across the whole change. The default makes a capsule of anything up to 44 px
+ * tall; set `--glass-radius-collapsed` to half the collapsed height otherwise.
+ */
+@utility glass-expandable {
+  border-radius: var(--glass-radius, var(--radius-popover));
+  --concentric-radius: var(--glass-radius, var(--radius-popover));
+  transition-property: border-radius, padding;
+  transition-duration: var(--motion-duration-morph);
+  transition-timing-function: var(--ease-standard);
+
+  &:where([data-expanded="false"]) {
+    border-radius: var(--glass-radius-collapsed, 1.375rem);
+    --concentric-radius: var(--glass-radius-collapsed, 1.375rem);
+  }
+}
+
+/*
+ * The part of an expandable surface that appears. A grid track animated between
+ * 0fr and 1fr gives a real height (and, with data-axis="both", a real width)
+ * without measuring anything in script. Its one child clips the content.
+ * While collapsed it is `visibility: hidden`, so nothing inside can take focus
+ * or be read; a visibility transition keeps it visible until the collapse ends.
+ */
+@utility glass-reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition-property: grid-template-rows, grid-template-columns, visibility;
+  transition-duration: var(--motion-duration-morph);
+  transition-timing-function: var(--ease-standard);
+
+  &:where([data-axis="both"]) {
+    grid-template-columns: 0fr;
+  }
+  &:where([data-expanded="true"]) {
+    grid-template-rows: 1fr;
+    visibility: visible;
+  }
+  &:where([data-axis="both"][data-expanded="true"]) {
+    grid-template-columns: 1fr;
+  }
+
+  & > * {
+    min-block-size: 0;
+    min-inline-size: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity var(--motion-duration-fade) var(--ease-standard);
+  }
+  &:where([data-expanded="true"]) > * {
+    opacity: 1;
+  }
+}
+
+/* ---- The surface itself ------------------------------------------------------ */
+
+@utility glass-surface {
+  position: relative;
+  color: var(--glass-ink);
+  background-color: color-mix(
+    in srgb,
+    var(--glass-tint, var(--glass-tint-color)) calc(var(--glass-fill-alpha) * 100%),
+    transparent
+  );
+  /*
+   * Top to bottom: state overlay, dimming layer, specular sheen.
+   * `--glass-sheen-image` and `--glass-edge` replace the whole sheen layer and the
+   * whole edge treatment; unset by default, they exist so a recipe can be tried
+   * without editing this file (see the "Glass recipes" story).
+   */
+  background-image:
+    linear-gradient(var(--glass-state-overlay, transparent), var(--glass-state-overlay, transparent)),
+    linear-gradient(rgb(0 0 0 / var(--glass-dim, 0)), rgb(0 0 0 / var(--glass-dim, 0))),
+    var(--glass-sheen-image, linear-gradient(to bottom, var(--glass-sheen), transparent 55%));
+  -webkit-backdrop-filter: var(--glass-backdrop-pre) var(--glass-backdrop-post);
+  backdrop-filter: var(--glass-backdrop-pre) var(--glass-backdrop-post);
+  /* Bright top edge, faint ring, darkened lower edge, then the drop shadow. */
+  box-shadow:
+    var(
+      --glass-edge,
+      inset 0 1px 0 0 var(--glass-edge-highlight),
+      inset 0 0 0 1px var(--glass-edge-ring),
+      inset 0 -1px 0 0 var(--glass-edge-shade)
+    ),
+    var(--glass-shadow, var(--glass-shadow-medium));
+  /* Invisible until Increase Contrast or forced colors need a real edge. No layout cost. */
+  outline: 1px solid var(--glass-border);
+  outline-offset: -1px;
+
+  /*
+   * Tier 2. Gated by an attribute the provider sets in Chromium only. It must
+   * never apply elsewhere: Firefox accepts this value and then paints no backdrop
+   * filter at all, which removes the contrast floor (measured, PROGRESS.md).
+   */
+  @variant glass-refraction {
+    backdrop-filter: var(--glass-backdrop-pre) var(--glass-refraction-filter, url("#caira-glass-refraction"))
+      var(--glass-backdrop-post);
+  }
+
+  /* Glass inside glass keeps its tint and drops everything else. */
+  :where([data-glass]) & {
+    color: var(--glass-ink-override, inherit);
+    background-color: var(--glass-tint, var(--fill-tertiary));
+    background-image: linear-gradient(
+      var(--glass-state-overlay, transparent),
+      var(--glass-state-overlay, transparent)
+    );
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  /* Tier 0: no backdrop-filter support. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    color: var(--glass-ink-override, var(--label));
+    background-color: var(--glass-tint, var(--surface-solid));
+    outline-color: var(--separator);
+  }
+
+  /* Tier 0: reduced transparency. Opaque surface, 1 px separator, no blur. */
+  @variant transparency-reduce {
+    color: var(--glass-ink-override, var(--label));
+    background-color: var(--glass-tint, var(--surface-solid));
+    background-image: linear-gradient(
+      var(--glass-state-overlay, transparent),
+      var(--glass-state-overlay, transparent)
+    );
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: var(--glass-shadow, var(--glass-shadow-medium));
+    outline-color: var(--separator);
+  }
+
+  /* Tier 0: forced colors. */
+  @variant forced-colors {
+    color: CanvasText;
+    background-color: Canvas;
+    background-image: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+    outline-color: CanvasText;
+  }
+}
+
+/* ---- Interaction ------------------------------------------------------------- */
+
+/*
+ * Response to hover, press and focus. It reads the state from the element itself:
+ * native pseudo-classes, or the data attributes React Aria sets on its controls.
+ */
+@utility glass-interactive {
+  transition-property: background-color, box-shadow, scale, opacity;
+  transition-duration: var(--motion-duration-fast);
+  transition-timing-function: var(--ease-standard);
+
+  @media (hover: hover) {
+    &:where(:hover):not(:where([data-rac])) {
+      --glass-state-overlay: var(--glass-hover-overlay);
+    }
+  }
+  &:where([data-hovered]) {
+    --glass-state-overlay: var(--glass-hover-overlay);
+  }
+  &:where(:active):not(:where([data-rac])),
+  &:where([data-pressed]) {
+    --glass-state-overlay: var(--glass-pressed-overlay);
+  }
+  &:where(:focus-visible):not(:where([data-rac])),
+  &:where([data-focus-visible]) {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  &:where(:disabled, [aria-disabled="true"], [data-disabled]) {
+    --glass-state-overlay: transparent;
+    opacity: 0.5;
+  }
+
+  @variant forced-colors {
+    &:where(:focus-visible, [data-focus-visible]) {
+      outline-color: Highlight;
+    }
+    &:where(:disabled, [aria-disabled="true"], [data-disabled]) {
+      color: GrayText;
+      opacity: 1;
+    }
+  }
+}
+
+/*
+ * Opt-in click response (VERIFIED: WWDC26 session 289, the glass "subtly
+ * bounces", for controls only). INFERRED mechanics: shrink while pressed, then
+ * release on an overshooting curve.
+ */
+@utility glass-bounce {
+  transition-property: background-color, box-shadow, scale, opacity;
+  transition-duration: var(--motion-duration-base);
+  transition-timing-function: var(--ease-bounce);
+
+  &:where(:active):not(:where([data-rac])),
+  &:where([data-pressed]) {
+    scale: 0.96;
+    transition-duration: var(--motion-duration-instant);
+    transition-timing-function: var(--ease-standard);
+  }
+
+  @variant motion-reduce {
+    scale: 1;
+    transition-timing-function: var(--ease-standard);
+  }
+}

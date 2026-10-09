@@ -1,0 +1,413 @@
+/*
+ * Design tokens.
+ *
+ * Evidence labels (SOURCES.md section 1):
+ *   VERIFIED  transcribed from an Apple page on 2026-10-08. Do not edit by eye.
+ *   INFERRED  our judgment. Apple publishes no value. Tune freely, then re-run tests.
+ *
+ * `src/test/css-tokens.ts` parses this file. Keep one declaration per line and
+ * keep the `@variant` nesting shape (base, theme-dark, theme-contrast,
+ * theme-contrast > theme-dark).
+ */
+
+/* ============================================================================
+ * 1. Primitive tokens (create Tailwind utilities)
+ * ========================================================================== */
+
+@theme static {
+  /*
+   * Fonts. INFERRED stacks. No San Francisco file or name is referenced: on Apple
+   * devices `system-ui` and the `ui-*` keywords resolve to the installed system
+   * fonts (SOURCES A31, section 7).
+   */
+  --font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+  --font-rounded: ui-rounded, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: ui-monospace, Menlo, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /*
+   * Text styles. VERIFIED: HIG Typography, "macOS built-in text styles"
+   * (size / line height / weight). These are the defaults; `[data-platform="ios"]`
+   * below swaps in the iOS "Large (default)" Dynamic Type row.
+   * INFERRED: 1 pt = 1 CSS px, expressed in rem (px / 16) so the browser's own
+   * text-size setting scales the whole ramp, the closest web analogue to Dynamic Type.
+   * Line heights are stored as the unitless ratio leading / size.
+   */
+  --text-large-title: 1.625rem; /* 26 */
+  --text-large-title--line-height: calc(32 / 26);
+  --text-large-title--font-weight: 400;
+  --text-title1: 1.375rem; /* 22 */
+  --text-title1--line-height: calc(26 / 22);
+  --text-title1--font-weight: 400;
+  --text-title2: 1.0625rem; /* 17 */
+  --text-title2--line-height: calc(22 / 17);
+  --text-title2--font-weight: 400;
+  --text-title3: 0.9375rem; /* 15 */
+  --text-title3--line-height: calc(20 / 15);
+  --text-title3--font-weight: 400;
+  --text-headline: 0.8125rem; /* 13 */
+  --text-headline--line-height: calc(16 / 13);
+  --text-headline--font-weight: 700;
+  --text-body: 0.8125rem; /* 13 */
+  --text-body--line-height: calc(16 / 13);
+  --text-body--font-weight: 400;
+  --text-callout: 0.75rem; /* 12 */
+  --text-callout--line-height: calc(15 / 12);
+  --text-callout--font-weight: 400;
+  --text-subheadline: 0.6875rem; /* 11 */
+  --text-subheadline--line-height: calc(14 / 11);
+  --text-subheadline--font-weight: 400;
+  --text-footnote: 0.625rem; /* 10 */
+  --text-footnote--line-height: calc(13 / 10);
+  --text-footnote--font-weight: 400;
+  --text-caption1: 0.625rem; /* 10 */
+  --text-caption1--line-height: calc(13 / 10);
+  --text-caption1--font-weight: 400;
+  --text-caption2: 0.625rem; /* 10 */
+  --text-caption2--line-height: calc(13 / 10);
+  --text-caption2--font-weight: 500;
+
+  /*
+   * Radii. INFERRED: Apple publishes no corner radius, including the macOS 27
+   * window radius (SOURCES section 3).
+   */
+  --radius-control: 0.5rem;
+  --radius-field: 0.375rem;
+  --radius-menu: 0.75rem;
+  --radius-popover: 1rem;
+  --radius-panel: 1.25rem;
+  --radius-sheet: 1.5rem;
+  --radius-window: 1rem;
+
+  /* Easing. INFERRED: HIG Motion gives principles, no curves. */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 1, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/*
+ * Semantic colors as Tailwind utilities (`text-label`, `bg-fill`, `border-separator`,
+ * `bg-system-blue`, ...). `inline` makes each utility read the variable at the
+ * point of use, so nested appearance scopes work.
+ */
+@theme inline {
+  --color-system-red: var(--system-red);
+  --color-system-orange: var(--system-orange);
+  --color-system-yellow: var(--system-yellow);
+  --color-system-green: var(--system-green);
+  --color-system-mint: var(--system-mint);
+  --color-system-teal: var(--system-teal);
+  --color-system-cyan: var(--system-cyan);
+  --color-system-blue: var(--system-blue);
+  --color-system-indigo: var(--system-indigo);
+  --color-system-purple: var(--system-purple);
+  --color-system-pink: var(--system-pink);
+  --color-system-brown: var(--system-brown);
+  --color-system-gray: var(--system-gray);
+  --color-system-gray2: var(--system-gray2);
+  --color-system-gray3: var(--system-gray3);
+  --color-system-gray4: var(--system-gray4);
+  --color-system-gray5: var(--system-gray5);
+  --color-system-gray6: var(--system-gray6);
+
+  --color-label: var(--label);
+  --color-label-secondary: var(--label-secondary);
+  --color-label-tertiary: var(--label-tertiary);
+  --color-label-quaternary: var(--label-quaternary);
+  --color-fill: var(--fill);
+  --color-fill-secondary: var(--fill-secondary);
+  --color-fill-tertiary: var(--fill-tertiary);
+  --color-fill-quaternary: var(--fill-quaternary);
+  --color-separator: var(--separator);
+  --color-separator-opaque: var(--separator-opaque);
+  --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-background-tertiary: var(--background-tertiary);
+  --color-surface-solid: var(--surface-solid);
+  --color-accent: var(--accent);
+  --color-accent-fill: var(--accent-fill);
+  --color-accent-text: var(--accent-text);
+  --color-on-accent: var(--on-accent);
+  --color-focus-ring: var(--focus-ring);
+}
+
+/* ============================================================================
+ * 2. Semantic variables, per appearance and contrast
+ * ========================================================================== */
+
+:root,
+[data-appearance] {
+  color-scheme: light;
+
+  /*
+   * System colors. VERIFIED: HIG Color, "Specifications > System colors",
+   * column "Default (light)". Page change log: June 9, 2025 "Updated system color values".
+   */
+  --system-red: rgb(255 56 60);
+  --system-orange: rgb(255 141 40);
+  --system-yellow: rgb(255 204 0);
+  --system-green: rgb(52 199 89);
+  --system-mint: rgb(0 200 179);
+  --system-teal: rgb(0 195 208);
+  --system-cyan: rgb(0 192 232);
+  --system-blue: rgb(0 136 255);
+  --system-indigo: rgb(97 85 245);
+  --system-purple: rgb(203 48 224);
+  --system-pink: rgb(255 45 85);
+  --system-brown: rgb(172 127 94);
+  /* VERIFIED: HIG Color, "iOS, iPadOS system gray colors", "Default (light)". */
+  --system-gray: rgb(142 142 147);
+  --system-gray2: rgb(174 174 178);
+  --system-gray3: rgb(199 199 204);
+  --system-gray4: rgb(209 209 214);
+  --system-gray5: rgb(229 229 234);
+  --system-gray6: rgb(242 242 247);
+
+  /*
+   * Labels, fills, separators, backgrounds. INFERRED. The HIG names these levels
+   * (Materials: label, secondary, tertiary, quaternary; fill, secondary, tertiary)
+   * but publishes no value. Label alphas are set by the contrast floor test
+   * (src/styles/contrast.test.ts), not by taste: primary and secondary reach
+   * 4.5:1 on every standard material and on regular glass; tertiary reaches 3:1;
+   * quaternary carries no guarantee and is for decoration only.
+   */
+  --label: rgb(0 0 0 / 0.88);
+  --label-secondary: rgb(0 0 0 / 0.72);
+  --label-tertiary: rgb(0 0 0 / 0.56);
+  --label-quaternary: rgb(0 0 0 / 0.28);
+  --fill: rgb(120 120 128 / 0.2);
+  --fill-secondary: rgb(120 120 128 / 0.16);
+  --fill-tertiary: rgb(120 120 128 / 0.12);
+  --fill-quaternary: rgb(120 120 128 / 0.08);
+  --separator: rgb(60 60 67 / 0.29);
+  --separator-opaque: rgb(198 198 200);
+  --background: rgb(255 255 255);
+  --background-secondary: rgb(242 242 247);
+  --background-tertiary: rgb(255 255 255);
+  /* Opaque stand-in for glass and materials in rendering tier 0. */
+  --surface-solid: rgb(246 246 248);
+
+  /*
+   * Accent. Components read `--accent`; the knob is `--accent-custom`, which
+   * LiquidGlassProvider (`accent`) writes on <html> and which inherits into
+   * appearance scopes. INFERRED derivations: system blue with white text is only
+   * 3.5:1, so filled controls use a darkened `--accent-fill` and text uses
+   * `--accent-text`. The ratios are asserted for the default accent only; a
+   * custom accent must be checked by its owner.
+   */
+  --accent: var(--accent-custom, var(--system-blue));
+  --accent-fill: color-mix(in srgb, var(--accent) 75%, black);
+  --accent-text: color-mix(in srgb, var(--accent) 70%, black);
+  --on-accent: rgb(255 255 255);
+  --focus-ring: var(--accent);
+
+  @variant theme-dark {
+    color-scheme: dark;
+
+    /* VERIFIED: HIG Color, "System colors", column "Default (dark)". */
+    --system-red: rgb(255 66 69);
+    --system-orange: rgb(255 146 48);
+    --system-yellow: rgb(255 214 0);
+    --system-green: rgb(48 209 88);
+    --system-mint: rgb(0 218 195);
+    --system-teal: rgb(0 210 224);
+    --system-cyan: rgb(60 211 254);
+    --system-blue: rgb(0 145 255);
+    --system-indigo: rgb(109 124 255);
+    --system-purple: rgb(219 52 242);
+    --system-pink: rgb(255 55 95);
+    --system-brown: rgb(183 138 102);
+    /* VERIFIED: "iOS, iPadOS system gray colors", "Default (dark)". */
+    --system-gray: rgb(142 142 147);
+    --system-gray2: rgb(99 99 102);
+    --system-gray3: rgb(72 72 74);
+    --system-gray4: rgb(58 58 60);
+    --system-gray5: rgb(44 44 46);
+    --system-gray6: rgb(28 28 30);
+
+    /* INFERRED. */
+    --label: rgb(255 255 255 / 0.92);
+    --label-secondary: rgb(255 255 255 / 0.76);
+    --label-tertiary: rgb(255 255 255 / 0.55);
+    --label-quaternary: rgb(255 255 255 / 0.25);
+    --fill: rgb(120 120 128 / 0.36);
+    --fill-secondary: rgb(120 120 128 / 0.32);
+    --fill-tertiary: rgb(120 120 128 / 0.24);
+    --fill-quaternary: rgb(120 120 128 / 0.18);
+    --separator: rgb(84 84 88 / 0.65);
+    --separator-opaque: rgb(56 56 58);
+    --background: rgb(28 28 30);
+    --background-secondary: rgb(44 44 46);
+    --background-tertiary: rgb(58 58 60);
+    --surface-solid: rgb(44 44 46);
+    --accent-fill: color-mix(in srgb, var(--accent) 75%, black);
+    --accent-text: color-mix(in srgb, var(--accent) 75%, white);
+    --on-accent: rgb(255 255 255);
+  }
+
+  @variant theme-contrast {
+    /* VERIFIED: HIG Color, "System colors", column "Increased contrast (light)". */
+    --system-red: rgb(233 21 45);
+    --system-orange: rgb(197 83 0);
+    --system-yellow: rgb(161 106 0);
+    --system-green: rgb(0 137 50);
+    --system-mint: rgb(0 133 117);
+    --system-teal: rgb(0 129 152);
+    --system-cyan: rgb(0 126 174);
+    --system-blue: rgb(30 110 244);
+    --system-indigo: rgb(86 74 222);
+    --system-purple: rgb(176 47 194);
+    --system-pink: rgb(231 18 77);
+    --system-brown: rgb(149 109 81);
+    /* VERIFIED: "iOS, iPadOS system gray colors", "Increased contrast (light)". */
+    --system-gray: rgb(108 108 112);
+    --system-gray2: rgb(142 142 147);
+    --system-gray3: rgb(174 174 178);
+    --system-gray4: rgb(188 188 192);
+    --system-gray5: rgb(216 216 220);
+    --system-gray6: rgb(235 235 240);
+
+    /* INFERRED. Primary and secondary labels reach 7:1 here (WCAG 1.4.6). */
+    --label: rgb(0 0 0);
+    --label-secondary: rgb(0 0 0 / 0.86);
+    --label-tertiary: rgb(0 0 0 / 0.72);
+    --label-quaternary: rgb(0 0 0 / 0.5);
+    --fill: rgb(120 120 128 / 0.32);
+    --fill-secondary: rgb(120 120 128 / 0.28);
+    --fill-tertiary: rgb(120 120 128 / 0.24);
+    --fill-quaternary: rgb(120 120 128 / 0.2);
+    --separator: rgb(60 60 67 / 0.62);
+    --separator-opaque: rgb(118 118 122);
+    --background: rgb(255 255 255);
+    --background-secondary: rgb(235 235 240);
+    --background-tertiary: rgb(255 255 255);
+    --surface-solid: rgb(246 246 248);
+    --accent-fill: color-mix(in srgb, var(--accent) 80%, black);
+    --accent-text: color-mix(in srgb, var(--accent) 70%, black);
+    --on-accent: rgb(255 255 255);
+
+    @variant theme-dark {
+      /* VERIFIED: HIG Color, "System colors", column "Increased contrast (dark)". */
+      --system-red: rgb(255 97 101);
+      --system-orange: rgb(255 160 86);
+      --system-yellow: rgb(254 223 67);
+      --system-green: rgb(74 217 104);
+      --system-mint: rgb(84 223 203);
+      --system-teal: rgb(59 221 236);
+      --system-cyan: rgb(109 217 255);
+      --system-blue: rgb(92 184 255);
+      --system-indigo: rgb(167 170 255);
+      --system-purple: rgb(234 141 255);
+      --system-pink: rgb(255 138 196);
+      --system-brown: rgb(219 166 121);
+      /* VERIFIED: "iOS, iPadOS system gray colors", "Increased contrast (dark)". */
+      --system-gray: rgb(174 174 178);
+      --system-gray2: rgb(124 124 128);
+      --system-gray3: rgb(84 84 86);
+      --system-gray4: rgb(68 68 70);
+      --system-gray5: rgb(54 54 56);
+      --system-gray6: rgb(36 36 38);
+
+      /* INFERRED. */
+      --label: rgb(255 255 255);
+      --label-secondary: rgb(255 255 255 / 0.9);
+      --label-tertiary: rgb(255 255 255 / 0.7);
+      --label-quaternary: rgb(255 255 255 / 0.45);
+      --fill: rgb(120 120 128 / 0.48);
+      --fill-secondary: rgb(120 120 128 / 0.42);
+      --fill-tertiary: rgb(120 120 128 / 0.36);
+      --fill-quaternary: rgb(120 120 128 / 0.3);
+      --separator: rgb(150 150 156 / 0.7);
+      --separator-opaque: rgb(124 124 128);
+      --background: rgb(0 0 0);
+      --background-secondary: rgb(36 36 38);
+      --background-tertiary: rgb(54 54 56);
+      --surface-solid: rgb(36 36 38);
+      --accent-fill: color-mix(in srgb, var(--accent) 42%, black);
+      --accent-text: var(--accent);
+      --on-accent: rgb(255 255 255);
+    }
+  }
+}
+
+/* ============================================================================
+ * 3. Platform density
+ * ========================================================================== */
+
+:root,
+[data-platform] {
+  /*
+   * Control metrics. The default heights equal the HIG hit-region sizes
+   * (VERIFIED: HIG Accessibility, macOS 28x28 pt default, iOS 44x44 pt). Using
+   * them as visual heights, and every other number here, is INFERRED.
+   */
+  --control-height: 1.75rem; /* 28 */
+  --control-height-small: 1.5rem; /* 24: the WCAG 2.5.8 minimum target */
+  --control-height-large: 2.25rem; /* 36 */
+  --bar-height: 3.25rem; /* 52 */
+  /* Never let a concentric inner radius collapse to a sharp corner. */
+  --concentric-min: 0.25rem;
+}
+
+[data-platform="ios"] {
+  --control-height: 2.75rem; /* 44 */
+  --control-height-small: 2.125rem; /* 34 */
+  --control-height-large: 3.125rem; /* 50 */
+  --bar-height: 2.75rem; /* 44 */
+
+  /* VERIFIED: HIG Typography, "iOS, iPadOS Dynamic Type sizes", tab "Large (default)". */
+  --text-large-title: 2.125rem; /* 34 */
+  --text-large-title--line-height: calc(41 / 34);
+  --text-large-title--font-weight: 400;
+  --text-title1: 1.75rem; /* 28 */
+  --text-title1--line-height: calc(34 / 28);
+  --text-title1--font-weight: 400;
+  --text-title2: 1.375rem; /* 22 */
+  --text-title2--line-height: calc(28 / 22);
+  --text-title2--font-weight: 400;
+  --text-title3: 1.25rem; /* 20 */
+  --text-title3--line-height: calc(25 / 20);
+  --text-title3--font-weight: 400;
+  --text-headline: 1.0625rem; /* 17 */
+  --text-headline--line-height: calc(22 / 17);
+  --text-headline--font-weight: 600;
+  --text-body: 1.0625rem; /* 17 */
+  --text-body--line-height: calc(22 / 17);
+  --text-body--font-weight: 400;
+  --text-callout: 1rem; /* 16 */
+  --text-callout--line-height: calc(21 / 16);
+  --text-callout--font-weight: 400;
+  --text-subheadline: 0.9375rem; /* 15 */
+  --text-subheadline--line-height: calc(20 / 15);
+  --text-subheadline--font-weight: 400;
+  --text-footnote: 0.8125rem; /* 13 */
+  --text-footnote--line-height: calc(18 / 13);
+  --text-footnote--font-weight: 400;
+  --text-caption1: 0.75rem; /* 12 */
+  --text-caption1--line-height: calc(16 / 12);
+  --text-caption1--font-weight: 400;
+  --text-caption2: 0.6875rem; /* 11 */
+  --text-caption2--line-height: calc(13 / 11);
+  --text-caption2--font-weight: 400;
+}
+
+/* ============================================================================
+ * 4. Concentric corners
+ * ========================================================================== */
+
+/*
+ * inner radius = outer radius - padding (VERIFIED rule: "Adopting Liquid Glass",
+ * concentric shapes). A container publishes `--concentric-radius` and
+ * `--concentric-padding`; a direct child takes `rounded-concentric`. CSS cannot
+ * re-publish the result under the same name (a custom property may not reference
+ * itself), so deeper levels use `concentric()` from `@caira/ui/foundations`.
+ */
+@utility rounded-concentric {
+  border-radius: max(
+    var(--concentric-min, 0.25rem),
+    calc(var(--concentric-radius, 0px) - var(--concentric-padding, 0px))
+  );
+}
