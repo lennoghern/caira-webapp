@@ -2,7 +2,7 @@
 
 Architectural decisions and their reasons, so a new session can continue without deciding again. Add a new entry for every decision; never rewrite an old one, supersede it.
 
-Evidence labels and source IDs are defined in SOURCES.md. **Last updated: 2026-10-09 (Phase 1 closed; Phase 2 started with Boxes). Entries D-001 to D-022 are from Phase 0 and are left as written; D-023 onward record what was decided since and say which earlier entry they amend. D-027 is superseded by D-032 (confirmed in D-037). D-033 is resolved by D-034, and the question D-034 left open is resolved by D-038.**
+Evidence labels and source IDs are defined in SOURCES.md. **Last updated: 2026-10-09 (Phase 1 closed; Phase 2 started with Boxes, whose template is approved). Entries D-001 to D-022 are from Phase 0 and are left as written; D-023 onward record what was decided since and say which earlier entry they amend. D-027 is superseded by D-032 (confirmed in D-037). D-033 is resolved by D-034, and the question D-034 left open is resolved by D-038. D-039 was proposed and is approved in D-040.**
 
 ## Status values
 
@@ -18,9 +18,10 @@ Answered on 2026-10-09: D-033 (which recipe is the default: recipe 2, recorded i
 
 Answered on 2026-10-09, closing Phase 1 (D-038): the asymmetric edge stays a trial and is not the default, which was the question D-034 left open.
 
+Answered on 2026-10-09 (D-040): D-039, the Boxes template, is approved with conditions, all of them met.
+
 | ID | Question | Blocks |
 | --- | --- | --- |
-| D-039 | Boxes was built as the template for the other components: native markup with no React Aria and no `"use client"`, a `title` prop instead of compound parts, no `<fieldset>` form, and a fixed set of files per component. Approve it, or change which part? | The other nine Layout components |
 | D-024 | Storybook cannot start on this machine (Smart App Control blocks a native module). Allow the WebAssembly build, change the setting yourself, keep the stand-in, or switch to Ladle? | The playground application. Visual review can use `pnpm stories` meanwhile |
 | D-032, D-037 | Morphing between two different surfaces that share an identity is not built, and is pending by your instruction of 2026-10-09. Build it as a FLIP on real elements, or leave it until a component needs it? | Batches that would morph one surface into another (Live Activities, Action sheets) |
 | D-031 | Raise the root `@types/node` from 20 to 24 to match the Node 24 runtime and Vitest 5's peer range? | Nothing; it removes a warning |
@@ -469,3 +470,45 @@ The owner closed Phase 1 and asked for the Layout category, one component first 
   Nothing has to be registered for the theme sweep: `stories-axe.spec.ts` picks up every story file and runs axe on it in 13 theme states per engine.
 - **Verified**: the figures are in PROGRESS.md, "Batch 1".
 - **Not verified**: WebKit; any screen reader; a box on glass or on a material (it stays opaque there, and a translucent fill would need the contrast model extended first).
+
+## D-040 D-039 is approved; when a component is one export with `classNames` and when it is compound parts
+
+- **Status**: Decided by the owner on 2026-10-09: the approval and its conditions. The wording of the rule under "The rule" is mine, written because the owner asked for it to be recorded; say so if it does not match what you meant.
+- **Approves**: D-039, point by point:
+  1. `Box` without React Aria: approved. Condition: ARCHITECTURE.md sections 2 and 4 carry the new counts (42 React Aria, 21 custom, 1 Base UI candidate) and the last line of 13.6 is corrected. Done.
+  2. The `title` prop: approved, provided it accepts a `ReactNode` and `classNames` is documented in the JSDoc. Done: `title` is typed `ReactNode` and a test names the group from a title that is a node; the component's JSDoc has a "Styling" paragraph for `className` and `classNames`, and each key of `classNames` has its own comment.
+  3. No `<fieldset>` form: approved, with the finding about the disabled button documented in the JSDoc. Done, with the figures (L16).
+  4. The look: approved as INFERRED. It stays labelled so in `box.styles.ts`, and D-038 item 3 applies to it.
+- **The rule.** Every later component picks one of two shapes and says which in its JSDoc.
+  - **One export that owns its wrapper, with its parts as props and `classNames`**, when all three hold:
+    1. The component must own an element around `children` for the design to hold, because where a part sits or which element draws the surface depends on something the caller does not control (density, direction, state). In `Box` the frame is the content element at macOS density and the whole box at iOS density.
+    2. The parts are a fixed set and each appears at most once, so there is nothing for the caller to repeat, reorder or leave out by mistake.
+    3. No part has behavior, state, a ref or ARIA wiring that a caller needs to reach; the component does all of that itself.
+
+    Then: each part is a prop typed `ReactNode` (`title` here); `className` goes to the root; `classNames` has one key per inner slot, named as the slots of the `*.styles.ts` file; the JSDoc has a "Styling" paragraph saying what each element draws.
+  - **Compound parts as named exports**, when any one holds:
+    1. A part repeats, or its order belongs to the caller: items, rows, tabs, segments, columns.
+    2. A part has its own behavior, state or props: press, selection, disabled, a ref, a `className` function reading React Aria's render state.
+    3. The React Aria primitive behind it is compound. The library keeps that shape, so React Aria's documentation and data attributes carry over unchanged.
+    4. Callers need to leave parts out or put their own elements between them in ways the component cannot foresee.
+
+    Then: each part takes its own `className` and `ref`, and there is no `classNames` prop. Parts are named exports (`Tabs`, `TabList`, `Tab`), never static members (`Tabs.Tab`): a static member of a Client Component is `undefined` when read from a Server Component (L17).
+  - **When a compound component also has to own a wrapper**, the compound shape wins and the owned element becomes a part of its own. `GlassSurface` with `GlassReveal` is that case already: the reveal is the element the animation needs, exported as a part.
+- **Why a rule**: without one each of the remaining 63 components decides again, and the two shapes fail differently. Parts as props cannot be assembled wrongly but hide their elements, which is why `classNames` exists and has to be documented. Compound parts expose everything but let a caller omit a part the design depends on.
+- **A limit of the first shape, found while documenting it** (LOCAL, read from the built stylesheet): classes the component sets under a density variant are not replaced by a bare class from the caller. `classNames={{ content: "p-0" }}` leaves `platform-macos:p-3` in place, and that rule comes later in the stylesheet with the same specificity, so it applies. The override needs the same variant (`platform-macos:p-0`, and `platform-ios:p-0` on the box itself). The JSDoc says so and a unit test holds it. A token for the padding (`--box-padding`, set per density) would let one override, the token set on the box, work at both densities; not done, because it adds a token after the look was approved. Yours to ask for.
+
+## D-041 Browser tests read anything that moves on the page's own clock
+
+- **Status**: Decided while stabilizing `expand.spec.ts` at the owner's instruction of 2026-10-09 (find the root cause; no longer timeouts, no retries; show at least 30 consecutive runs in Firefox). The rule is proposed for every later motion test; it stands unless you object.
+- **What was wrong** (LOCAL, measured, L18): two tests in `expand.spec.ts` started a morph, waited a fixed time on the test's side and then read the surface through the protocol. In Firefox on this machine one protocol round trip (reading a bounding box) takes 18 to 52 ms with one worker. With Playwright's default of four workers the processor (4 cores, 8 threads) sat at 100% for most of the run, and the same round trip took 72 to 1215 ms. A reading meant for 500 ms into a 1500 ms morph was taken 529 to 609 ms in with one worker and 625 to 1745 ms in with four. The easing curve does 73% of the travel in the first third of the time, so from about 1070 ms on the surface is within the test's 2 px margin of its final size, and "in between" failed. In the other test the second key press went out after a 700 ms wait and three such round trips and reached the page 921 to 2159 ms into a 2000 ms morph (740 to 770 ms with one worker): in two of twenty runs the surface was within 2 px of full size by then, and in one of those the morph had already ended, so the test passed without testing a press on a moving surface. Its last line polled the height through the protocol with a 5 s budget, which ran out twice while the surface was still on its way down (56 and 36 px read last).
+- **So the cause is both**: the environment makes the protocol slow (processor saturated by four parallel browsers, one of them recording video), and the tests were built so that a slow protocol changed their verdict. The page itself was never slow: in every instrumented run its frames were at most 115 ms apart, and a reversed morph was at rest at most 1.6 s after the test began polling for it.
+- **Decision**:
+  1. A value that depends on when it is read is read by the page, on the animation's own clock, and fetched afterwards. `armReading` takes one reading on the first frame where the morph's `currentTime` is at or past a given time; `recordFlight` has the page log the key press, the change of state and the height on every frame until rest.
+  2. A wait on the test's side is only ever a minimum. Being late must not be able to change the result.
+  3. Thresholds keep their value and move with the clock: "in between" by 2 px as before; the state changes within 500 ms of the key press, now between two page timestamps; the surface is at rest within 5 s of that, now on the page's clock.
+  4. What a test needs to be true before its claim means anything is asserted, with the measured time in the message: the key press must reach the button while the first morph is still running.
+- **What changed in the tests, so nothing is hidden**: no test timeout was raised and no retry was added (`retries` is still unset; the file's 90 s limit from D-037 is untouched). In "it takes input while it moves" the wait before the key press went down from 700 to 300 ms and two round trips before it were removed (reading the box, checking focus; focus is now recorded by the page at the key press). The explicit `{ timeout: 500 }` on the `aria-expanded` expectation is gone: that line is now only a wait for the state, with the default limit, and the 500 ms requirement is the page-clock assertion after it. The single reading 150 ms after the press became a check of every frame after it. In "the element itself changes size" the end of the morph is awaited in the page (`animation.finished`) instead of polled through the protocol, the same construct whose 5 s ran out in the other test.
+- **The proof asked for is incomplete**: 14 consecutive runs of each revised test in Firefox under four workers without a failure (10 before one last edit, 4 after), not the 30 asked for. Claude Code stopped the background run because the system was critically low on memory, and it is restarted only at the owner's word. Before the fix the same two tests failed 4 times in 28 runs in that setup. The table is in PROGRESS.md, "Batch 1".
+- **Checked that the new tests can fail**: with the morph shortened to 200 ms the first reports that no frame was drawn at 500 ms; with the key press sent after 2600 ms the second reports "the key press reached the page 2629 ms into the 2000 ms morph".
+- **Not established**: what exactly stalled in the two runs where the old poll ran out. It was not captured in 20 instrumented runs under the same load. INFERRED: one round trip of several seconds. If it had been the page that froze, the new test would still fail, on its 5 s page-clock line.
+- **For later tests**: the same two helpers, or the same idea, for every component with a transition. If a third file needs them they move to `tests/browser/` as a module.

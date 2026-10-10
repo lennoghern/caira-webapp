@@ -46,7 +46,7 @@ These belong to `GlassSurface` and `LiquidGlassProvider`, not to one component. 
 
 | # | Component | Tier | Apple APIs | Web element and ARIA pattern | Primitive used | macOS 27 changes | Open questions |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 5 | [Boxes](https://developer.apple.com/design/human-interface-guidelines/boxes) | A | SwiftUI `GroupBox` · AppKit `NSBox`. Not supported in tvOS or watchOS | `role="group"` named by its title. `role="region"` ([Landmarks][apg-landmarks]) only when it is a page region. No `<fieldset>` form (D-039) | **Custom**, native `<div role="group">`. No React Aria primitive: a box has no behavior for one to manage. The plan was `Group` (+ `Label`, `Heading`); changed in D-039, proposed and awaiting review | None found (page read again in full on 2026-10-09, SOURCES A41) | On glass or on a material the box stays opaque; a translucent fill there needs the contrast model extended first |
+| 5 | [Boxes](https://developer.apple.com/design/human-interface-guidelines/boxes) | A | SwiftUI `GroupBox` · AppKit `NSBox`. Not supported in tvOS or watchOS | `role="group"` named by its title. `role="region"` ([Landmarks][apg-landmarks]) only when it is a page region. No `<fieldset>` form (D-039) | **Custom**, native `<div role="group">`. No React Aria primitive: a box has no behavior for one to manage. The plan was `Group` (+ `Label`, `Heading`); changed in D-039, approved by the owner (D-040) | None found (page read again in full on 2026-10-09, SOURCES A41) | On glass or on a material the box stays opaque; a translucent fill there needs the contrast model extended first |
 | 6 | [Collections](https://developer.apple.com/design/human-interface-guidelines/collections) | A | UIKit `UICollectionView` · AppKit `NSCollectionView`. Not supported in watchOS | [Grid][apg-grid] for selectable items; plain list when not interactive | `GridList` + `Virtualizer` with `GridLayout` or `WaterfallLayout`; `useDragAndDrop` for reordering | UPD: SwiftUI `reorderable()` in more containers (API only) | Virtualization threshold. Keyboard reordering alternative for WCAG 2.5.7 |
 | 7 | [Column views](https://developer.apple.com/design/human-interface-guidelines/column-views) | A | AppKit `NSBrowser`. macOS only | Miller columns. Closest patterns: [Tree View][apg-treeview] (one tree shown as columns) or one [Listbox][apg-listbox] per column | **Custom, built from APG pattern**, composing one `ListBox` per column | None found | Tree semantics versus a row of listboxes. Decide with a screen-reader spike before the Layout batch |
 | 8 | [Disclosure controls](https://developer.apple.com/design/human-interface-guidelines/disclosure-controls) | A | SwiftUI `DisclosureGroup` · AppKit `NSButton.BezelStyle.disclosure`, `.pushDisclosure`. Not supported in tvOS or watchOS | [Disclosure][apg-disclosure]; [Accordion][apg-accordion] for groups | `Disclosure`, `DisclosurePanel`, `DisclosureGroup` | None found | None |
@@ -139,7 +139,7 @@ These belong to `GlassSurface` and `LiquidGlassProvider`, not to one component. 
 
 ## Totals by main primitive
 
-Counted from the "Primitive used" column above. Changed on 2026-10-09: Boxes (5) moved from React Aria to custom (D-039, proposed). ARCHITECTURE.md sections 2 and 4 still state the Phase 0 figures, 43 and 20.
+Counted from the "Primitive used" column above. Changed on 2026-10-09: Boxes (5) moved from React Aria to custom (D-039, approved in D-040). ARCHITECTURE.md sections 2 and 4 state the same figures.
 
 | Main primitive | Rows | Which |
 | --- | --- | --- |

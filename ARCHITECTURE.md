@@ -2,7 +2,7 @@
 
 How the component library is built.
 
-Sections 1 to 12 are the Phase 0 plan, kept as written. **Section 13 says what Phase 1 actually built and where it departs from the plan; where the two disagree, section 13 and DECISIONS.md D-023 onward win.** One exception to "kept as written": the morph was replaced after review, so section 6.4 and the lines that depend on it were rewritten on 2026-10-09 and say so.
+Sections 1 to 12 are the Phase 0 plan, kept as written. **Section 13 says what Phase 1 actually built and where it departs from the plan; where the two disagree, section 13 and DECISIONS.md D-023 onward win.** Two exceptions to "kept as written", both dated 2026-10-09 and marked where they occur: the morph was replaced after review, so section 6.4 and the lines that depend on it were rewritten; and the counts of React Aria-backed and custom components in sections 2 and 4 were synchronized with COMPONENT-MAP.md when Boxes moved to native markup.
 
 Evidence labels (VERIFIED, STANDARD, VENDOR, LOCAL, REPORTED, INFERRED) are defined in SOURCES.md section 1. Source IDs such as A20 or W4 point to rows in that file. Decisions are numbered in DECISIONS.md.
 
@@ -36,7 +36,7 @@ Inspected on 2026-10-08.
 | Styling | Tailwind CSS v4: tokens in `@theme` and CSS variables, glass and materials as `@utility` classes | 4.3.3 | Already in place; the directives exist in v4 docs (L4) | LOCAL, VENDOR |
 | Variants | `tailwind-variants` + `tailwind-merge` | 3.3.1 / 3.7.0 | Slots suit compound components; it merges classes through tailwind-merge. the registry entry for `class-variance-authority` was last updated in November 2024 | VENDOR, INFERRED |
 | State variants | `tailwindcss-react-aria-components` plugin | 2.2.0 (peer `tailwindcss ^4`) | Short variants (`hovered:`, `pressed:`, `selected:`, `entering:`) for React Aria's data attributes, set up with `@plugin` | VENDOR |
-| Behavior and accessibility | `react-aria-components` | 1.22.0 | Required by the brief. Backs 43 of the 64 rows; 20 are custom and 1 is an exception candidate (COMPONENT-MAP.md) | VENDOR |
+| Behavior and accessibility | `react-aria-components` | 1.22.0 | Required by the brief. Backs 42 of the 64 rows; 21 are custom and 1 is a Base UI exception candidate (COMPONENT-MAP.md). The plan said 43 and 20; Boxes moved to native markup on 2026-10-09 (D-039, D-040) | VENDOR |
 | Exceptions | Base UI `Menubar` (candidate), Floating UI for selection anchoring | 1.8.0 / 0.27.20 | Only where React Aria has nothing. Register in COMPONENT-MAP.md | VENDOR, INFERRED |
 | Icons | `lucide-react` behind `<Icon>` | 1.53.0 (ISC) | Open set. Next.js already optimizes its imports by default (L6) | VENDOR, LOCAL |
 | Fonts | System stack only | n/a | SF fonts may not be bundled or used for non-Apple-OS interfaces (A31) | VERIFIED |
@@ -98,8 +98,10 @@ Fact: every `react-aria-components` export file contains `import "client-only"` 
 
 | Kind of file | Directive | Examples |
 | --- | --- | --- |
-| Anything that imports React Aria, uses a hook, or handles events | `"use client"` at the top | All 43 React Aria-backed components, the 11 custom components that compose React Aria parts, `LiquidGlassProvider`, the toolbar overflow logic, `Window` |
-| Pure markup and class names | none (server-safe) | `Icon`, `Material`, `GlassSurface`, `GlassReveal`, `GlassGroup`, `ThemeScript`, `*.styles.ts`, layout wrappers that do not use React Aria |
+| Anything that imports React Aria, uses a hook, or handles events | `"use client"` at the top | All 42 React Aria-backed components, the 11 custom components that compose React Aria parts, `LiquidGlassProvider`, the toolbar overflow logic, `Window` |
+| Pure markup and class names | none (server-safe) | `Icon`, `Material`, `GlassSurface`, `GlassReveal`, `GlassGroup`, `ThemeScript`, `*.styles.ts`, `Box` and other layout wrappers that do not use React Aria |
+
+Counts synchronized on 2026-10-09: 42 rows are backed by React Aria, 21 are custom (11 of them compose React Aria parts, 10 use none) and 1 is the Base UI candidate; the plan said 43 and 20. One refinement of "uses a hook": `useId` is among the five hooks React's server build exports, so a component whose only hook is `useId`, as `Box`, stays server-safe (D-039).
 | CSS | n/a | tokens, utilities |
 
 Rules:
@@ -445,4 +447,4 @@ How this was checked: every foundation renders under `renderToString` in a Node 
 - Firefox was Playwright's build, not a release build.
 - The contrast guarantee covers materials and regular glass. It does not cover `clear` glass or a custom tint or accent.
 - Performance was measured on one desktop with small surfaces.
-- The visual design has not been reviewed by a person.
+- Visual review by a person: the owner reviewed the glass by eye in the playground, the morph in round 1 and the recipes in round 2, and chose recipe 2 as the default (D-032, D-034, D-038). No other part of the visual design has a recorded review by a person. (Corrected on 2026-10-09; this line said the visual design had not been reviewed by a person.)

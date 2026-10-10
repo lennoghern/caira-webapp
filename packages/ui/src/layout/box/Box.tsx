@@ -16,10 +16,15 @@ export interface BoxProps extends Omit<HTMLAttributes<HTMLDivElement>, "title" |
    * enough to navigate to, and it then needs a `title` or an `aria-label`.
    */
   role?: "group" | "region";
-  /** Classes for the parts inside the box. `className` goes to the box itself. */
+  /**
+   * Classes for the two parts inside the box, merged over the library's own
+   * with the caller winning. `className` goes to the box itself. See "Styling"
+   * on the component for what each element draws.
+   */
   classNames?: {
+    /** The title element. Rendered only when there is a title. */
     title?: string;
-    /** The element around `children`. On macOS it is the frame, so padding overrides go here. */
+    /** The element around `children`. At macOS density it is the frame. */
     content?: string;
   };
   ref?: Ref<HTMLDivElement>;
@@ -50,15 +55,40 @@ export interface BoxProps extends Omit<HTMLAttributes<HTMLDivElement>, "title" |
  * HIG guidance worth keeping in mind: keep a box small next to its container,
  * and group within a box with padding and alignment before nesting another box.
  *
- * Web interpretation, not a port. Deviations: there is no native `<fieldset>`
- * form, because a disabled fieldset disables the controls inside it without
- * React Aria knowing (DECISIONS.md D-039); `NSBox`'s `titlePosition`, `boxType`
- * and custom border and fill colors are not offered; and on glass or a
- * material the box stays opaque.
+ * Styling: the box is one component that owns the element around `children`,
+ * so its parts are reached with props, not with child components (DECISIONS.md
+ * D-040). `title` takes any node. `className` goes to the box itself: width,
+ * margins, placement in a grid. `classNames.title` and `classNames.content` go
+ * to the title and to the element around `children`: a text style for the
+ * title, a layout for the content (`classNames={{ content: "grid gap-3" }}`).
+ * The frame (padding, border, radius, background) is set per density, on the
+ * content element at macOS density and on the box at iOS density, so a class
+ * that overrides one of those needs the same variant on the same element:
+ * `classNames={{ content: "platform-macos:p-0" }}` and
+ * `className="platform-ios:p-0"`. A bare `p-0` loses to the library's class.
+ *
+ * Why there is no `<fieldset>` form: a disabled fieldset disables the controls
+ * inside it without React Aria knowing. Measured in jsdom with a React Aria
+ * `Button` inside `<fieldset disabled>`: the button matches `:disabled` and a
+ * click calls `onPress` zero times, but it has no `data-disabled`, the
+ * attribute the library's disabled styles read, so it would look enabled.
+ * Nothing is lost for assistive technology: a fieldset maps to the `group`
+ * role, which is what the box sets. To disable what is in a box, disable the
+ * controls themselves.
+ *
+ * Web interpretation, not a port. Other deviations: `NSBox`'s `titlePosition`,
+ * `boxType` and custom border and fill colors are not offered, and on glass or
+ * a material the box stays opaque.
  *
  * @example
  * <Box title="Playback">
  *   <label><input type="checkbox" /> Crossfade between songs</label>
+ * </Box>
+ *
+ * @example
+ * // A title that is a node, and a layout for the content.
+ * <Box title={<><Icon name="info" /> About this device</>} classNames={{ content: "grid gap-3" }}>
+ *   …
  * </Box>
  */
 export function Box({

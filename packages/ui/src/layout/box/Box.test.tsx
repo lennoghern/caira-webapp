@@ -128,6 +128,20 @@ describe("Box", () => {
       expect(content).not.toHaveClass("platform-macos:p-3");
     });
 
+    it("replaces a frame class only when the override carries the same density variant", () => {
+      render(
+        <Box data-testid="box" className="platform-ios:p-0" classNames={{ content: "p-0" }}>
+          Body
+        </Box>,
+      );
+      const element = screen.getByTestId("box");
+      const content = element.firstElementChild;
+      expect(element).toHaveClass("platform-ios:p-0");
+      expect(element).not.toHaveClass("platform-ios:p-4");
+      // A bare class is a different rule: both stay, and the library's, declared later in the stylesheet, applies.
+      expect(content).toHaveClass("p-0", "platform-macos:p-3");
+    });
+
     it("passes attributes through and takes ref as a plain prop (React 19)", () => {
       const ref = createRef<HTMLDivElement>();
       render(<Box ref={ref} id="playback" data-section="audio" lang="en" />);
