@@ -12,6 +12,13 @@ const PORT = 6007;
  * Engines: `PLAYWRIGHT_ENGINES=chromium,firefox,webkit` selects projects.
  * Chromium is the default because it is the only engine known to launch on
  * every development machine here; see PROGRESS.md for what ran where.
+ *
+ * Workers: one, fixed here (DECISIONS.md D-042). Playwright's default is half the
+ * logical processors, four on the development machine (4 cores, 8 threads, 6 GB).
+ * Four browsers saturated the processor, which made protocol round trips in
+ * Firefox take up to a second instead of a few hundredths (D-041), and ran the
+ * machine out of memory. Two is the ceiling set for this machine and was not
+ * measured; `--workers` on the command line still overrides the value.
  */
 const engines = (process.env.PLAYWRIGHT_ENGINES ?? "chromium").split(",").map((name) => name.trim());
 
@@ -28,6 +35,7 @@ export default defineConfig({
   testDir: "./tests/browser",
   outputDir: "./test-results/playwright",
   fullyParallel: true,
+  workers: 1,
   forbidOnly: Boolean(process.env.CI),
   reporter: [["list"]],
   use: {

@@ -2,7 +2,7 @@
 
 Architectural decisions and their reasons, so a new session can continue without deciding again. Add a new entry for every decision; never rewrite an old one, supersede it.
 
-Evidence labels and source IDs are defined in SOURCES.md. **Last updated: 2026-10-09 (Phase 1 closed; Phase 2 started with Boxes, whose template is approved). Entries D-001 to D-022 are from Phase 0 and are left as written; D-023 onward record what was decided since and say which earlier entry they amend. D-027 is superseded by D-032 (confirmed in D-037). D-033 is resolved by D-034, and the question D-034 left open is resolved by D-038. D-039 was proposed and is approved in D-040.**
+Evidence labels and source IDs are defined in SOURCES.md. **Last updated: 2026-10-09 (Phase 1 closed; Phase 2 started with Boxes, whose template is approved). Entries D-001 to D-022 are from Phase 0 and are left as written; D-023 onward record what was decided since and say which earlier entry they amend. D-027 is superseded by D-032 (confirmed in D-037). D-033 is resolved by D-034, and the question D-034 left open is resolved by D-038. D-039 was proposed and is approved in D-040. D-042 fixes the browser tests at one worker and completes the proof D-041 left open (30 consecutive runs of `expand.spec.ts` in Firefox); the full browser suite has not completed a run since.**
 
 ## Status values
 
@@ -25,6 +25,8 @@ Answered on 2026-10-09 (D-040): D-039, the Boxes template, is approved with cond
 | D-024 | Storybook cannot start on this machine (Smart App Control blocks a native module). Allow the WebAssembly build, change the setting yourself, keep the stand-in, or switch to Ladle? | The playground application. Visual review can use `pnpm stories` meanwhile |
 | D-032, D-037 | Morphing between two different surfaces that share an identity is not built, and is pending by your instruction of 2026-10-09. Build it as a FLIP on real elements, or leave it until a component needs it? | Batches that would morph one surface into another (Live Activities, Action sheets) |
 | D-031 | Raise the root `@types/node` from 20 to 24 to match the Node 24 runtime and Vitest 5's peer range? | Nothing; it removes a warning |
+| D-042 | The full browser suite (Chromium and Firefox, one worker) was stopped by Claude Code for lack of memory 3 minutes in and was not restarted. Say when to run it again, or run it yourself (`PLAYWRIGHT_ENGINES=chromium,firefox`, `pnpm test:browser`) | Calling the browser suite green after the fix of D-041 |
+| D-042 | The 90 s limit of `expand.spec.ts` is not needed with one worker (its four tests take 2 to 9 s). Remove it, or keep it for runs with more workers? | Nothing |
 | D-003 | The menu bar: Base UI exception or custom build? | Menus batch (after a spike) |
 | D-019 | Notifications: React Aria's unstable toast or Base UI's? | System experiences batch |
 | D-020 | Chart engine | Content batch |
@@ -512,3 +514,45 @@ The owner closed Phase 1 and asked for the Layout category, one component first 
 - **Checked that the new tests can fail**: with the morph shortened to 200 ms the first reports that no frame was drawn at 500 ms; with the key press sent after 2600 ms the second reports "the key press reached the page 2629 ms into the 2000 ms morph".
 - **Not established**: what exactly stalled in the two runs where the old poll ran out. It was not captured in 20 instrumented runs under the same load. INFERRED: one round trip of several seconds. If it had been the page that froze, the new test would still fail, on its 5 s page-clock line.
 - **For later tests**: the same two helpers, or the same idea, for every component with a transition. If a third file needs them they move to `tests/browser/` as a module.
+
+---
+
+# Phase 2, batch 1: the proof for `expand.spec.ts` and the worker count (2026-10-09)
+
+The owner asked for the proof D-041 left incomplete, on this machine's terms: one worker (two at most), in blocks of ten, with the worker count fixed in `playwright.config.ts` and recorded here; then one run of the full browser suite in Chromium and Firefox; if something failed, to capture what stalled and not to repeat until it passed; no longer timeouts and no retries; and a check of whether the 90 s limit of `expand.spec.ts` is still needed, reported and not changed.
+
+## D-042 Browser tests run with one worker, fixed in `playwright.config.ts`
+
+- **Status**: Decided by the owner on 2026-10-09: one worker, two at most, fixed in the configuration. Taking 1 and not 2 is mine; it stands unless you object. Two things **wait for you**, both below: the full browser suite, which did not finish, and the 90 s limit.
+- **Decision**: `workers: 1` in `packages/ui/playwright.config.ts`. Nothing else in that file changed: `fullyParallel` stays (it has no effect with one worker), `retries` is still unset, and no timeout was touched there or in any spec. `--workers` on the command line overrides the value for one run.
+- **Why a fixed number**: Playwright's default is half the logical processors, which is four on this machine (AMD Ryzen 5 3400G, 4 cores, 8 threads, 6 GB of memory, other applications open). Both problems of the previous session came from that default (LOCAL, D-041): the processor sat at 100% and one protocol round trip in Firefox took 72 to 1215 ms instead of 18 to 52 ms, and four Firefox instances with a video recording and its Chromium decoder used up the memory until Claude Code stopped the run.
+- **Why 1 and not 2**: one worker is the setup the fast figures of D-041 were measured in; two was not measured. It also costs next to nothing here: ten repeats of `expand.spec.ts` in Firefox took 5.7 minutes with four workers (D-041) and 6.3 and 6.5 minutes with one, because four workers were sharing a saturated processor.
+- **The proof D-041 left open is complete: 30 consecutive runs in Firefox without a failure** (LOCAL, 2026-10-09; the file as committed in `31265da`, unchanged; one worker, taken from the configuration; three blocks of `--repeat-each=10`, one after the other, with no other test run in between):
+
+  | Block | Result | Wall time | Processor, sampled every 5 s | Available memory, lowest |
+  | --- | --- | --- | --- | --- |
+  | One run to time the file, not counted | 5 of 5 passed | 50 s | median 79%, highest 92% | 365 MB |
+  | 1, ten repeats | 50 of 50 passed | 6.3 min | median 66%, highest 91%, at 90% or more in 2 of 75 samples | 419 MB |
+  | 2, ten repeats | 50 of 50 passed | 6.5 min | median 69%, highest 91%, at 90% or more in 2 of 77 samples | 644 MB |
+  | 3, ten repeats | 50 of 50 passed | 12.1 min | median 83%, highest 99%, at 90% or more in 34 of 145 samples | 477 MB |
+
+  Over the 30 runs, on the page's clock: the mid-flight reading was taken 500 to 517 ms into the 1500 ms morph (height 77.6 to 78.4, between 32.25 and 94.25); the key press reached the page 321 to 641 ms into the 2000 ms morph, the state changed 4 to 44 ms later, and the surface was at rest 757 to 1094 ms after that.
+- **Block 3 took twice as long, and that is the environment**: other applications open on the machine were busy during it (one sample of the per-process load, taken while it ran, put them at about three and a half of the eight logical processors). Every test took 1.5 to 2 times longer and every reading on the page's clock stayed where it was in blocks 1 and 2. The block ran past the 10 minutes a foreground command gets here and finished in the background; nothing was stopped or restarted. Three short commands of mine also ran while it did (that load sample, a listing of the suite's tests, a script adding up durations); they add load and cannot make a pass easier.
+- **What the 30 runs show, and what they do not**: they show the file is stable in the configuration it now runs in. They do not by themselves separate the fixed tests from the old ones, because the old tests were not seen to fail with one worker either (D-041: six instrumented runs, the reading landing at 529 to 609 ms). That the fix holds when the protocol is slow rests on the 14 runs under four workers recorded in D-041, on block 3 here, and on the two checks that the new tests can fail. Running 30 times under four workers, the setup the old tests failed in 4 times of 28, is what this machine cannot do.
+- **How these runs differed from a plain `pnpm test:browser`, so nothing is hidden**: the harness was built once, before the first block, and Playwright was started directly for each block; the JSON reporter ran next to the list reporter, for the durations; and Playwright's API log was on (`DEBUG=pw:api`, every protocol call with its time, written to a file), so that a failure would come with what stalled. A process outside the tests sampled the processor and the available memory every 5 s. No trace, no retry, no changed timeout.
+- **The 90 s limit of `expand.spec.ts`** (D-037; `test.describe.configure({ timeout: 90_000 })`): checked, not changed. It covers four of the five tests; the first one, the video reading, has had its own 120 s since Phase 1.
+
+  | Firefox, one worker, 30 runs | Shortest | Median | Longest | Limit in force | Playwright's default |
+  | --- | --- | --- | --- | --- | --- |
+  | The four tests under the 90 s limit | 2.2 s | 3.2 to 4.2 s, by test | 8.9 s (in block 3) | 90 s | 30 s |
+  | The video test | 17.5 s | 21.0 s | 48.2 s (in block 3; 28.9 s in blocks 1 and 2) | 120 s, its own | 30 s |
+
+  Reading: with one worker the 90 s limit is not needed. The slowest of the four tests it covers took 8.9 s on a loaded machine, under a third of the 30 s they would get without it. The reason written beside it, a test that took 40 s "while other workers are recording video", cannot happen with one worker. Which test that was is not recorded. It took 16 s alone, and the only test of the file that takes that long alone today is the video test (17.5 s at the least), which never depended on the 90 s; INFERRED, not established, that it was that one. The limit would matter again only for a run started with more workers from the command line. The video test is a different case: it does pass 30 s when the machine is busy, so its own 120 s is still needed.
+- **Needs your decision**: remove the 90 s line and its comment, or keep them as headroom for runs with more workers. Removing it changes no verdict today; with it gone, a test that stalled would be reported after 30 s and not after 90.
+- **The full browser suite was started once and did not finish.** Chromium and Firefox, one worker, 84 tests, in the background because it does not fit in the 10 minutes of a foreground command. Claude Code stopped it 3 minutes in, "because the system is running low on memory" while the session was idle. Its notice says this is not a failure of the command and says nothing about the command's own memory use, and the samples agree: available memory was 589 MB at the last one, above the lowest reading of the blocks (365 MB), which ran in the foreground and were not stopped.
+  - What had run: 29 tests, all in Chromium, all passed: `expand.spec.ts` 5 of 5 (the four tests under the 90 s limit took 1.8 to 2.9 s, the video test 34.0 s), `glass-pixels.spec.ts` 5 of 5 (headroom of the narrowest margin 0.82 levels, as in D-035), `layout/box.spec.ts` 13 of 13, `refraction.spec.ts` 4 of 4, `smoke.spec.ts` 2 of 2.
+  - Where it was when it was stopped: the first test of `stories-axe.spec.ts` in Chromium, on its first story, between loading the page and adding the axe script. The API log shows no stalled call before that (the last one to finish took 24 ms). No test failed.
+  - Not run: the 13 `stories-axe.spec.ts` tests in Chromium and all 42 tests in Firefox.
+  - No process was left behind and port 6007 is free. The run was not started again: the notice asks for that to wait for the owner's word.
+- **So this is still open**: no full run of the browser suite has completed since the fix of D-041. The last complete one is the run before the fix (81 passed, 2 skipped, 1 failed; PROGRESS.md, "Batch 1").
+- **Not verified**: two workers; the suite under any other worker count than one; `stories-axe.spec.ts` and everything in Firefox but `expand.spec.ts` since the fix; WebKit.
