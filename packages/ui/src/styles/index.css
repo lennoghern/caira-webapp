@@ -12,9 +12,10 @@
 @import "./materials.css";
 @import "./glass.css";
 @import "./motion.css";
+@import "./selection.css";
 @import "./a11y.css";
 
-/* Short state variants for React Aria's data attributes: hovered:, pressed:, selected:, entering:, ... */
+/* Short state variants for React Aria's data attributes: hover:, pressed:, selected:, entering:, ... */
 @plugin "tailwindcss-react-aria-components";
 
 /* Scan the library's own components wherever the consuming app lives. */

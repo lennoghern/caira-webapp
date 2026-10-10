@@ -13,6 +13,12 @@ const PORT = 6007;
  * Chromium is the default because it is the only engine known to launch on
  * every development machine here; see PROGRESS.md for what ran where.
  *
+ * Scope: a path limits a run to some spec files (`playwright test tests/browser/layout`),
+ * and `STORIES_AXE_PREFIX=layout-` limits stories-axe.spec.ts to the stories whose
+ * id starts with that prefix, with the same theme states and rules (D-043). One
+ * category and one engine at a time is what the development machine can take;
+ * the run with every spec and every story is for closing a phase.
+ *
  * Workers: one, fixed here (DECISIONS.md D-042). Playwright's default is half the
  * logical processors, four on the development machine (4 cores, 8 threads, 6 GB).
  * Four browsers saturated the processor, which made protocol round trips in

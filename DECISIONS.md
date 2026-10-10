@@ -2,7 +2,7 @@
 
 Architectural decisions and their reasons, so a new session can continue without deciding again. Add a new entry for every decision; never rewrite an old one, supersede it.
 
-Evidence labels and source IDs are defined in SOURCES.md. **Last updated: 2026-10-09 (Phase 1 closed; Phase 2 started with Boxes, whose template is approved). Entries D-001 to D-022 are from Phase 0 and are left as written; D-023 onward record what was decided since and say which earlier entry they amend. D-027 is superseded by D-032 (confirmed in D-037). D-033 is resolved by D-034, and the question D-034 left open is resolved by D-038. D-039 was proposed and is approved in D-040. D-042 fixes the browser tests at one worker and completes the proof D-041 left open (30 consecutive runs of `expand.spec.ts` in Firefox); the full browser suite has not completed a run since.**
+Evidence labels and source IDs are defined in SOURCES.md. **Last updated: 2026-10-09 (Phase 1 closed; Phase 2, batch 1, Layout, built: D-043 to D-048, all proposed). Entries D-001 to D-022 are from Phase 0 and are left as written; D-023 onward record what was decided since and say which earlier entry they amend. D-027 is superseded by D-032 (confirmed in D-037). D-033 is resolved by D-034, and the question D-034 left open is resolved by D-038. D-039 was proposed and is approved in D-040. D-042 fixes the browser tests at one worker and completes the proof D-041 left open (30 consecutive runs of `expand.spec.ts` in Firefox); the full browser suite has not completed a run since. D-043 to D-048 are the choices made while building the other nine Layout components; D-046 amends COMPONENT-MAP.md row 9 and the counts in ARCHITECTURE.md.**
 
 ## Status values
 
@@ -27,6 +27,11 @@ Answered on 2026-10-09 (D-040): D-039, the Boxes template, is approved with cond
 | D-031 | Raise the root `@types/node` from 20 to 24 to match the Node 24 runtime and Vitest 5's peer range? | Nothing; it removes a warning |
 | D-042 | The full browser suite (Chromium and Firefox, one worker) was stopped by Claude Code for lack of memory 3 minutes in and was not restarted. Say when to run it again, or run it yourself (`PLAYWRIGHT_ENGINES=chromium,firefox`, `pnpm test:browser`) | Calling the browser suite green after the fix of D-041 |
 | D-042 | The 90 s limit of `expand.spec.ts` is not needed with one worker (its four tests take 2 to 9 s). Remove it, or keep it for runs with more workers? | Nothing |
+| D-043 | `stories-axe.spec.ts` has one test per theme state with a 180 s limit; with 44 stories a state takes up to 90 s in Firefox, so the unscoped run passes the limit within the next batch. Split it into one test per theme state and story file (no limit raised, same coverage), or another way? | The browser axe run of batch 2 in Firefox, and the full run that closes the phase |
+| D-047 | The selection highlight has under 3:1 against gray backgrounds in dark appearance (2.61, 2.12; 2.39 for a tab), so selected text is also semibold. Keep that, or another cue or fill? The look of all nine new components is INFERRED and not reviewed | Nothing; it is one utility to change |
+| D-044 | Column views are a group of listboxes, decided from the specifications and not from the screen-reader spike COMPONENT-MAP.md asked for. Who runs that pass, and with which screen reader? | Calling Column views verified for assistive technology |
+| D-047, PROGRESS "Open after batch 1" 3 | Right to left in the playground sets `dir` only; React Aria mirrors its arrow keys from its locale. Give the right-to-left state an RTL locale? | Testing mirrored keys in React Aria components |
+| PROGRESS "Open after batch 1" 4 | One run of the unit tests timed out under load with Vitest's default worker count (5 of 256); later runs passed. Fix the worker count in `vitest.config.mts`, as D-042 did for Playwright? | Nothing today; a repeat would look like a failing suite |
 | D-003 | The menu bar: Base UI exception or custom build? | Menus batch (after a spike) |
 | D-019 | Notifications: React Aria's unstable toast or Base UI's? | System experiences batch |
 | D-020 | Chart engine | Content batch |
@@ -556,3 +561,80 @@ The owner asked for the proof D-041 left incomplete, on this machine's terms: on
   - No process was left behind and port 6007 is free. The run was not started again: the notice asks for that to wait for the owner's word.
 - **So this is still open**: no full run of the browser suite has completed since the fix of D-041. The last complete one is the run before the fix (81 passed, 2 skipped, 1 failed; PROGRESS.md, "Batch 1").
 - **Not verified**: two workers; the suite under any other worker count than one; `stories-axe.spec.ts` and everything in Firefox but `expand.spec.ts` since the fix; WebKit.
+
+---
+
+# Phase 2, batch 1: the nine remaining Layout components (2026-10-09)
+
+The owner asked for the rest of the Layout category on the Boxes template, with these rules: browser tests for this category only and one engine at a time, with a proposal for limiting `stories-axe` to a category without reducing its coverage; the two ARIA questions of COMPONENT-MAP.md answered before building Column views and Outline views; a component that needs a decision of the owner's marked `blocked` and skipped; failures captured, not repeated until they pass; no longer timeouts, no retries, no new packages. No component turned out to need such a decision. The entries below are the choices made while building; all are **Proposed** and stand unless you object, and each says how to undo it.
+
+## D-043 `stories-axe.spec.ts` can be limited to a story prefix
+
+- **Status**: Proposed, and built, at the owner's request for a proposal.
+- **Decision**: the environment variable `STORIES_AXE_PREFIX` limits that spec to the stories whose id starts with one of the given prefixes, comma-separated (`layout-`, or `layout-table,layout-list`). Unset, every story runs, as before.
+- **What it does not change**: the 13 theme states, the rule set, the two-pass contrast method, the exclusions. Only which stories are opened.
+- **So that a scoped run cannot be mistaken for a full one**: every result line prints the scope and "44 of 67 stories"; a prefix that matches no story fails the run; and the run that counts for closing a phase is the unscoped one.
+- **With it**: `PLAYWRIGHT_ENGINES=firefox STORIES_AXE_PREFIX=layout- playwright test tests/browser/stories-axe.spec.ts`, and `playwright test tests/browser/layout` for the specs of a category. No script was added to `package.json`: setting a variable in a script that works in both PowerShell and bash needs a package the project does not have.
+- **A limit this does not solve, and that needs you** (PROGRESS.md, "Open after batch 1", item 1): each theme state is one test that opens every story in scope, with a 180 s limit. With the 44 Layout stories one state took 28 to 37 s in Chromium and 42 to 90 s in Firefox. The unscoped run will pass that limit in Firefox within the next batch. Raising it is ruled out; splitting the test by story file is the candidate.
+- **To undo**: remove the `SCOPE` lines from the spec.
+
+## D-044 Column views: a group of listboxes, not a tree
+
+- **Status**: Proposed. It answers the question COMPONENT-MAP.md row 7 left open, **without the screen-reader spike that row asked for**, which no agent can run.
+- **Decision**: `ColumnView` is a `group` holding one `listbox` per column, with a `separator` after each. The first column takes the name of the view and each later one the name of the item it belongs to. An item with nested items says so in its accessible description. Left and Right move between columns; inside a column everything is React Aria's `ListBox`.
+- **Why not one `tree`** (STANDARD, SOURCES W1 and W3, read for this): in a tree every parent item contains or owns a `group` with its children. In a column view the children sit in a sibling column, so the relationship can only be stated with `aria-owns`, the attribute for when "the DOM hierarchy cannot be used to represent the relationship". The APG notes that elements pulled in that way are read after the DOM children, in the order referenced, and that focus scripts have to compensate. A row of listboxes keeps three things the same: the DOM order, the reading order and what is on screen.
+- **What it costs**: no `aria-level` and no `aria-expanded`. `option` supports neither (checked in WAI-ARIA 1.2: its supported states are `aria-checked`, `aria-posinset`, `aria-setsize`, and `aria-selected` is required). The level is carried by the names of the columns, which read as the path, and "has nested items" by a description.
+- **What Apple does** (VERIFIED for the names only): AppKit's accessibility roles include `browser` and `column`, apart from `outline`. Their descriptions say nothing more, and how VoiceOver speaks `NSBrowser` was not read anywhere.
+- **Evidence**: 22 unit tests; the accessibility tree Chromium and Firefox build from the markup, asserted in `column-view.spec.ts`; no axe violation.
+- **Not verified**: any screen reader. If a pass with one shows the listboxes read badly, the alternative is a custom tree with `aria-owns`, which React Aria's `Tree` cannot be: it renders its rows in one container.
+- **Other choices in the component** (INFERRED): it is data-driven (`items`, `getChildren`), because the columns follow from the selected path and cannot be written by the caller; selection follows focus inside a column, as in the Finder; Right into a column with no selection selects its first item; Left clears what was selected after the parent; the direction of Left and Right follows the computed `direction`, not React Aria's locale.
+
+## D-045 Outline views: `Tree` for one column, `Table` with a tree column for several
+
+- **Status**: Proposed. It answers the question COMPONENT-MAP.md row 12 left open, by test.
+- **Decision**: `OutlineView` and `OutlineItem` wrap React Aria's `Tree`. An outline with further columns is `Table` with `treeColumn`; `Cell` draws the indent and the triangle in that column. There is no separate several-column outline component.
+- **The question, answered** (LOCAL, `OutlineView.test.tsx`): the tree-column `Table` of `react-aria-components` 1.22.0 is a `treegrid`, and its keyboard follows the APG Treegrid pattern: Right on a collapsed row expands it and focus stays; Right on an expanded row moves to its first cell; Left from the first cell returns to the row; Left on an expanded row collapses it. Rows carry `aria-level`, `aria-posinset` and `aria-setsize`, and `aria-expanded` only when they have children. The props are stable (`treeColumn`, `expandedKeys`, `defaultExpandedKeys`, `onExpandedChange`), with no `UNSTABLE_` prefix.
+- **Differences found, each pinned by a test so it cannot change unnoticed**:
+  1. Left on a collapsed row, or on one without children, moves to its last cell. The pattern says focus does not move.
+  2. A row is named by its row header cell, and the triangle is a button in that cell, so the name of a parent row begins with the triangle's name: "Expand Documents".
+  3. In the one-column form (`Tree`), Right on an open row stays on it; the APG Tree View pattern moves to the first child. `Tree` is itself a `treegrid` of one-cell rows, not a `tree`.
+- **Why not hide the triangle from assistive technology to fix 2**: arrow keys are not available to someone using a screen reader on a touch screen, who needs the button.
+
+## D-046 Labels: native markup, server-safe
+
+- **Status**: Proposed. It applies D-002 and the reasoning of D-039 to a second component.
+- **Amends**: COMPONENT-MAP.md row 9, whose primitive was React Aria's `Label` and `Text`, and the totals there and in ARCHITECTURE.md sections 2 and 4: 41 rows backed by React Aria, 22 custom (11 compose React Aria parts, 11 use none), 1 Base UI candidate.
+- **Decision**: `Label` is a `span` (or `div`, `p`, `label`) with an optional icon and a title, no hook and no directive. One export with `classNames` (D-040: two fixed parts, no behavior).
+- **Why**: the HIG's label is static text. React Aria's `Label` exists to be wired to a field through that field's context, and every React Aria file is a Client Component (L1). A static label would ship JavaScript for nothing, and could not be rendered from a Server Component without a boundary.
+- **What it does not replace**: the label of a form field. Fields built on React Aria (batch 5) will name themselves with React Aria's `Label`, and can take the same classes (`label.styles.ts`).
+- **Also chosen**: the quaternary label color is not offered, because it carries no contrast guarantee and never colors text (D-025).
+- **To undo**: `Label.tsx` only; the map row and the counts go back.
+
+## D-047 Selection, row feedback and disabled content are three utilities, and the highlight is not the only cue
+
+- **Status**: Proposed. **The look is INFERRED and yours to review**; the measurements below are the reason for what was added to it.
+- **Decision**: `src/styles/selection.css` holds what every row-like part of this category shares.
+  1. `selection-emphasized`: the accent fill with the on-accent color, **and semibold text**. It re-declares the label tokens inside, so a secondary label in a selected row reads in the on-accent color, and the focus ring too. Under forced colors it is the system's `Highlight` and `HighlightText`.
+  2. `row-hovered` and `row-pressed`: translucent grays under the pointer. A row with keyboard focus takes neither.
+  3. `content-disabled`: the tertiary label color, re-declared for what is inside.
+  A selected tab uses the same colors through its sliding indicator.
+- **Why the accent fill**: besides the labels it is the only pair `contrast.test.ts` holds to a floor (`--on-accent` on `--accent-fill`, 4.5:1 in the four color states), and a selected tab in an AppKit tab view is accent-colored (INFERRED: from memory, not read this session).
+- **Measured** (`layout/contrast.test.ts`, thresholds unchanged), and what follows from it:
+  - The highlight against the surface around it reaches 3:1 everywhere in light appearance and **not in dark**: 2.61 and 2.12 on the secondary and tertiary backgrounds, 2.39 for a tab on its track, and down to 1.36 under increased contrast. ARCHITECTURE.md section 8 says a state is never signalled by color alone, so a second cue was needed: semibold, which Apple uses for the selected row of a sidebar in macOS 27 (VERIFIED for sidebars, WWDC26 session 289; extending it to every row is INFERRED). A tab keeps its width when it becomes semibold (an unseen semibold copy reserves it).
+  - The accent focus ring on a hovered row is under 3:1 in two cases (2.89 and 2.95), which is why keyboard focus and hover fill exclude each other, and why a tab's ring is the label color on its track.
+  - Under increased contrast, text on the highlight is held to 4.5:1, the floor of filled accent controls, not to the 7:1 of labels.
+- **Forced colors**: the highlight is the system's selection pair, and how far that is from the canvas is the person's theme. The palette Firefox emulates gives 2.94:1, Chromium's 15.13:1. The tests assert the system colors are used, not a ratio.
+- **If you want another cue or another fill**: it is one utility. A checkmark already exists for option lists (`selectionStyle="checkmark"` on `List`).
+
+## D-048 Names and shapes of the Layout exports
+
+- **Status**: Proposed. Each follows the rule of D-040; this entry records the cases that were not obvious.
+- `CollectionView`, not `Collection`: React Aria exports a `Collection` that callers use next to it.
+- Lists and tables are two components, `List` (React Aria `GridList`) and `Table`. A list is a grid of one column, not a `listbox`, so that a row can hold buttons and links.
+- `ColumnView` and `Lockup` are single exports that own their parts: the columns of one are derived from the path, and where the footer of the other sits depends on its type.
+- `SplitViewPane` draws its own divider (`divider="start"` or `"end"`). There is no divider export, so a divider cannot be placed without a pane to control or left without a name.
+- `DisclosurePanel` takes `className` on the element around its children, not on React Aria's panel, which is the clip the change of height needs. A `className` function reading React Aria's render state is not offered on that one part.
+- Inside a `DisclosureGroup` a trigger sits in a level 3 heading by default (APG Accordion); alone it has none (APG Disclosure).
+- `useResizeHandle` (`src/layout/shared`) is the one implementation of the APG Window Splitter behavior, used by `SplitView` and by the columns of `ColumnView`. It is not exported from the package.
+- **Defaults that are numbers of mine** (INFERRED): a pane starts at 240 px between 120 and 480; a column at 200 px between 120 and 480; an arrow key moves a divider 16 px; a collapsible pane dragged under half its minimum is hidden; collection items are 6, 9 or 12 rem; a lockup grows 5%.
+- **Not built, each recorded as a gap in PROGRESS.md and not as a decision**: virtualization (the map named React Aria's `Virtualizer`; it needs fixed sizes and its own look at how it meets these classes), a way to reorder without dragging, a keyboard path to resize a table column, the macOS 27 tabs picker style.

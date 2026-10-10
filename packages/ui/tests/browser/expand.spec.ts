@@ -21,8 +21,12 @@ import { recordStrips } from "./video";
 
 const FIXTURE = "tests-fixtures--expansion";
 
-// Firefox is slow to drive while other workers are recording video: one of these
-// took 40 s in a full run and 16 s alone. More time, the same assertions.
+// Set when the suite ran with Playwright's default of four workers: one of these
+// took 40 s in Firefox in a full run and 16 s alone. The suite now runs with one
+// worker (playwright.config.ts, DECISIONS.md D-042), where the four tests this
+// covers took 2.2 to 8.9 s in Firefox over 30 runs, so the limit only comes into
+// play for a run started with `--workers` above one. Keeping or removing it is an
+// open question in D-042. More time, the same assertions.
 test.describe.configure({ timeout: 90_000 });
 
 const slowDown = (page: Page, ms: number) =>

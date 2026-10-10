@@ -1,0 +1,85 @@
+/*
+ * Selection in lists, tables, collections, outline views and column views.
+ *
+ * VERIFIED (HIG Lists and tables, Split views): a row that leads somewhere stays
+ * highlighted while it is selected, so people can see the path they took.
+ * VERIFIED for sidebars only (WWDC26 session 289): the selected row is set in
+ * semibold. INFERRED: using semibold for every selected row here, and the
+ * highlight itself. Apple publishes no color for it, so it is the accent fill
+ * that filled controls already use, the one pair of colors besides the labels
+ * that contrast.test.ts holds to a floor (`--on-accent` on `--accent-fill`,
+ * 4.5:1 for the default accent in all four color states).
+ */
+
+/*
+ * The emphasized highlight: `selected:selection-emphasized`.
+ *
+ * It re-declares the label tokens for what is inside, so a secondary or tertiary
+ * label in a selected row reads in the on-accent color and not in a gray that
+ * was chosen for the page background. The focus ring is re-declared for the same
+ * reason: the accent on the accent fill would not show.
+ *
+ * Not color alone (WCAG 2.2 1.4.1): the text of a selected row is semibold. The
+ * fill by itself is not enough everywhere. Against the backgrounds a row sits
+ * on it has 3:1 or more in light appearance and less in dark (2.6 and 2.1 on
+ * the secondary and tertiary backgrounds; the figures are pinned in
+ * src/layout/contrast.test.ts). Under forced colors it uses the system's own
+ * selection pair.
+ */
+@utility selection-emphasized {
+  background-color: var(--accent-fill);
+  color: var(--on-accent);
+  font-weight: 600;
+  --label: var(--on-accent);
+  --label-secondary: var(--on-accent);
+  --label-tertiary: var(--on-accent);
+  --accent-text: var(--on-accent);
+  --focus-ring: var(--on-accent);
+
+  @variant forced-colors {
+    background-color: Highlight;
+    color: HighlightText;
+    --label: HighlightText;
+    --label-secondary: HighlightText;
+    --label-tertiary: HighlightText;
+    --accent-text: HighlightText;
+    --focus-ring: HighlightText;
+  }
+}
+
+/*
+ * Feedback under the pointer for a row that can be pressed. Translucent grays
+ * over the row's own background; the labels on them are held to the same floors
+ * as on the bare backgrounds (src/layout/contrast.test.ts). A row with keyboard
+ * focus takes neither: the accent focus ring has 3:1 on the bare backgrounds and
+ * falls just under it on these grays (2.89 on the light secondary background).
+ */
+@utility row-hovered {
+  background-color: var(--fill-quaternary);
+}
+
+@utility row-pressed {
+  background-color: var(--fill-tertiary);
+}
+
+/*
+ * A row, an item or a lockup that is unavailable: `disabled:content-disabled`.
+ * The tertiary label is the color the HIG gives to text that describes an
+ * unavailable item (HIG Labels). Like the highlight, it re-declares the label
+ * tokens, so a label or an icon inside dims with its row instead of keeping the
+ * color it was given.
+ */
+@utility content-disabled {
+  color: var(--label-tertiary);
+  --label: var(--label-tertiary);
+  --label-secondary: var(--label-tertiary);
+  --accent-text: var(--label-tertiary);
+
+  @variant forced-colors {
+    color: GrayText;
+    --label: GrayText;
+    --label-secondary: GrayText;
+    --label-tertiary: GrayText;
+    --accent-text: GrayText;
+  }
+}

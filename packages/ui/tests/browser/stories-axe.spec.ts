@@ -15,6 +15,14 @@ import { AXE_VERSION, listStoryIds, openStory, runAxe, type Globals } from "./su
  *  - Page-level rules (one main landmark, one h1, content in landmarks). A story
  *    is a fragment; those rules are for the app's pages.
  *  - Screen-reader output. Nothing automated here tests it.
+ *
+ * Scope. `STORIES_AXE_PREFIX` limits a run to the stories whose id starts with
+ * one of the given prefixes, comma-separated: `layout-` for a category,
+ * `layout-table,layout-list` for components. It narrows which stories are
+ * opened and nothing else: the same theme states, the same rules, the same
+ * exclusions, and the scope is printed on every line of the result. A prefix
+ * that matches no story fails the run. Unset, every story runs, which is the
+ * run that counts for closing a phase (DECISIONS.md D-043).
  */
 
 const THEMES: readonly (readonly [string, Globals])[] = [
@@ -34,14 +42,25 @@ const THEMES: readonly (readonly [string, Globals])[] = [
 // Measurement fixtures are bare surfaces, not UI.
 const isFixture = (id: string) => id.startsWith("tests-");
 
+const SCOPE = (process.env.STORIES_AXE_PREFIX ?? "")
+  .split(",")
+  .map((prefix) => prefix.trim().toLowerCase())
+  .filter(Boolean);
+const scopeLabel = SCOPE.length > 0 ? `scope ${SCOPE.join(", ")}` : "every story";
+
 async function checkAllStories(
   page: import("@playwright/test").Page,
   globals: Globals,
   label: string,
   options: { contrast?: boolean } = {},
 ) {
-  const ids = (await listStoryIds(page)).filter((id) => !isFixture(id));
-  expect(ids.length).toBeGreaterThan(10);
+  const all = (await listStoryIds(page)).filter((id) => !isFixture(id));
+  expect(all.length).toBeGreaterThan(10);
+  const ids = SCOPE.length > 0 ? all.filter((id) => SCOPE.some((prefix) => id.startsWith(prefix))) : all;
+  // A scope that selects nothing would pass with nothing checked.
+  for (const prefix of SCOPE) {
+    expect(all.some((id) => id.startsWith(prefix)), `no story id starts with "${prefix}"`).toBe(true);
+  }
   const failures: string[] = [];
   let incompleteContrast = 0;
   let onFilteredSurfaces = 0;
@@ -59,7 +78,7 @@ async function checkAllStories(
     }
   }
   console.log(
-    `axe ${AXE_VERSION} | ${label} | ${ids.length} stories | ${passes} rule passes | ${failures.length} violations | ` +
+    `axe ${AXE_VERSION} | ${label} | ${scopeLabel} | ${ids.length} of ${all.length} stories | ${passes} rule passes | ${failures.length} violations | ` +
       `${incompleteContrast} nodes where axe could not determine contrast | ` +
       `${onFilteredSurfaces} text nodes on glass or materials left to the pixel tests`,
   );
